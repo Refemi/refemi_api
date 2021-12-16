@@ -73,7 +73,6 @@ const getReferenceByTheme = async (req, res) => {
   try {
     const referencesReq = await Postgres.query(
       `
-    
       SELECT
         "references".id as id, "references".reference_name as name,
         categories.category_name as category,
@@ -88,6 +87,31 @@ const getReferenceByTheme = async (req, res) => {
 
     `,
       [themeName]
+    );
+
+    res.status(200).json({
+      references: referencesReq.rows,
+    });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+};
+const getReferenceByCountry = async (req, res) => {
+  const countryName = req.params.country;
+
+  try {
+    const referencesReq = await Postgres.query(
+      `
+      SELECT
+        "references".id as id, "references".reference_name as name,
+        reference_country_name AS country
+      FROM "references"
+      JOIN categories ON "references".reference_category_id = categories.id
+        LEFT JOIN sections ON categories.section_id = sections.id
+      WHERE LOWER("reference_country_name") = LOWER($1)
+      GROUP BY "references".id, categories.category_name;
+    `,
+      [countryName]
     );
 
     res.status(200).json({
@@ -170,6 +194,7 @@ module.exports = {
   getReferences,
   getReferenceById,
   getReferenceByTheme,
+  getReferenceByCountry,
   postReferences,
   putReferences,
   deleteReferences,

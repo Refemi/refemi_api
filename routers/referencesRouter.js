@@ -11,11 +11,13 @@ const {
   putReferences,
   deleteReferences,
   getReferenceByTheme,
+  getReferenceByCountry,
 
 } = require("../controllers/referencesController");
 
 router.get("/category/:category", getReferences);
 router.get("/theme/:theme", getReferenceByTheme)
+router.get("/country/:country", getReferenceByCountry)
 router.get("/:id", getReferenceById);
 router.post("/", postReferences);
 router.put("/:id", putReferences);
