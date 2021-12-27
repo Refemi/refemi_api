@@ -30,7 +30,7 @@ const getHomeCounters = async (_, res) => {
     res.status(200).json({
       numberOfRefs: totalReferenceByContributors.rows[0].references_count,
       numberOfContributors: totalReferenceByContributors.rows[0].contributors_count,
-      monthRefs: monthRefs.rows[0].count,
+      monthRefs: parseInt(monthRefs.rows[0].count),
     });
   } catch (error) {
       res.status(500).json({
@@ -67,8 +67,8 @@ const getDashboardUser = async (req, res) => {
     );
 
     res.status(200).json({
-      approvedContributions: totalContributions.rows[0].count,
-      pendingContributions: pendingContributions.rows[0].count,
+      approvedContributions: parseInt(totalContributions.rows[0].count),
+      pendingContributions: parseInt(pendingContributions.rows[0].count),
     });
   }catch (error) {
     res.status(500).json({
@@ -119,10 +119,10 @@ const getDashboardAdmin = async (req, res) => {
     );
       
     res.status(200).json({
-      pendingContributions: pendingContributions.rows[0].count,
-      approvedContributions: approvedContributions.rows[0].count,
-      totalContributors: totalContributors.rows[0].count,
-      totalAdmins: totalAdmins.rows[0].count,
+      pendingContributions: parseInt(pendingContributions.rows[0].count),
+      approvedContributions: parseInt(approvedContributions.rows[0].count),
+      totalContributors: parseInt(totalContributors.rows[0].count),
+      totalAdmins: parseInt(totalAdmins.rows[0].count),
     });
   } catch (error) {
     res.status(500).json({
