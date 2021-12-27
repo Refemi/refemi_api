@@ -8,9 +8,12 @@ const  creatAdmin=async(req,res)=>{
       
         res.status().json()
     }
-    catch(err){
-        res.status(500).json(err)
-    }
+   catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error:error
+    });
+}
     
 }
        
@@ -20,9 +23,11 @@ const  getAdmin=async(req,res)=>{
       
         res.status().json()
     }
-    catch(err){
-        res.status(500).json(err)
-    }
+    catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error:error
+    });}
     
 }
        
@@ -32,10 +37,12 @@ const  modifyAdmin=async(req,res)=>{
       
         res.status().json()
     }
-    catch(err){
-        res.status(500).json(err)
-    }
-    
+    catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error:error
+     });
+   }
 }
        
 const  deleteAdmin=async(req,res)=>{
@@ -44,9 +51,11 @@ const  deleteAdmin=async(req,res)=>{
       
         res.status().json()
     }
-    catch(err){
-        res.status(500).json(err)
-    }
+   catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error:error
+    });}
     
 }
        

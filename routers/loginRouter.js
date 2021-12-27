@@ -7,8 +7,7 @@ const{checkRights}=require("../middlewares/checkRight")
 
 
 router.post("/",checkUser);
-router.delete("/logout",logout);
-router.put("/", modifyUser)
+
 
 
 
