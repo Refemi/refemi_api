@@ -26,16 +26,15 @@ const getHomeCounters = async (_, res) => {
       'SELECT COUNT(*) FROM "references" WHERE EXTRACT(MONTH FROM "reference_creation_date") = $1 AND "references".reference_status = true',
       [month]
     );
-
     res.status(200).json({
-      numberOfRefs: totalReferenceByContributors.rows[0].references_count,
-      numberOfContributors: totalReferenceByContributors.rows[0].contributors_count,
-      monthRefs: parseInt(monthRefs.rows[0].count),
+      totalReferences: parseInt(totalReferenceByContributors.rows[0].references_count),
+      totalContributors: parseInt(totalReferenceByContributors.rows[0].contributors_count),
+      monthlyReferences: parseInt(monthRefs.rows[0].count),
     });
   } catch (error) {
       res.status(500).json({
         message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-        error:error
+        error: error
     });}
 };
 
