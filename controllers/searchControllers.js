@@ -11,14 +11,20 @@ const getAllSearch = async (req, res) => {
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json([]);
+      return res.status(404).json({
+        message: "this search result does not exist in the database",
+      });
     }
-    res.status(200).json(result.rows);
+    res.status(200).json({
+      search: result.rows
+    });
 
-    res.status(200).json(result.rows);
-  } catch (err) {
-    res.status(500).json(err);
-  }
+    
+  }catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });}
 };
 
 module.exports = { getAllSearch };

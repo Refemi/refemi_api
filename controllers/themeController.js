@@ -17,7 +17,9 @@ const getAllThemes = async (_, response) => {
 
     themes = themesResult.rows;
   } catch (error) {
-    response.status(500).json(error);
+    res.status(500).json({
+      error: error
+    });
   }
 
   await response.status(200).json({
@@ -32,7 +34,6 @@ const getTheme = async (request, response) => {
     const themeQuery =
       'SELECT id, "theme_name" AS name FROM "themes" WHERE LOWER("theme_name") = LOWER($1)';
     const themeArgument = [request.params.name];
-
     const themeResult = await Postgres.query(themeQuery, themeArgument);
 
     if (themeResult.rows.length === 0) {
@@ -42,12 +43,14 @@ const getTheme = async (request, response) => {
     }
 
     theme = themeResult.rows[0];
-  } catch (error) {
-    response.status(500).json(error);
-  }
+  }catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });}
 
-  response.status(200).json({
-    theme: theme,
+  response.status(200).json({ 
+  theme: theme,
   });
 };
 
@@ -85,7 +88,7 @@ const postTheme = async (request, response) => {
 
       default:
         response.status(500).json({
-          message: "Unknown Error",
+          message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
           error: error,
         });
     }
@@ -105,7 +108,9 @@ const putTheme = async (request, response) => {
     newTheme = request.body.name;
 
     if (!newTheme) {
-      return response.status(400).json({});
+      return response.status(400).json({
+        message: "The theme name is missing",
+      });
     }
 
     const themeQuery =
@@ -115,13 +120,15 @@ const putTheme = async (request, response) => {
     const themeResult = await Postgres.query(themeQuery, themeArgument);
 
     if (themeResult.rows === 0) {
-      return response.status(404).json({
+      return response.status(404).json({ 
         message: "The theme cannot be found",
       });
     }
-  } catch (err) {
-    res.status(500).json(err);
-  }
+  }catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });}
 };
 
 const deleteTheme = async (request, response) => {
@@ -129,7 +136,6 @@ const deleteTheme = async (request, response) => {
     const themeQuery =
       'DELETE FROM "themes" WHERE LOWER("theme_name") = LOWER($1)';
     const themeArgument = [request.params.name];
-
     const themeResult = await Postgres.query(themeQuery, themeArgument);
 
     if (themeResult.rowCount === 0) {
@@ -138,8 +144,10 @@ const deleteTheme = async (request, response) => {
       });
     }
   } catch (error) {
-    response.status(500).json(error);
-  }
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });}
 
   response.status(200).json({
     theme: request.params.name,

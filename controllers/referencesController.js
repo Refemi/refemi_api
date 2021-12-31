@@ -30,8 +30,11 @@ const getReferences = async (req, res) => {
     res.status(200).json({
       references: referencesReq.rows,
     });
-  } catch (err) {
-    res.status(500).json(err);
+  } catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error:error
+    });
   }
 };
 const getReferenceById = async (req, res) => {
@@ -63,8 +66,11 @@ const getReferenceById = async (req, res) => {
     res.status(200).json({
       reference: reference.rows,
     });
-  } catch (err) {
-    res.status(500).json(err);
+  } catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });
   }
 };
 const getReferenceByTheme = async (req, res) => {
@@ -73,7 +79,6 @@ const getReferenceByTheme = async (req, res) => {
   try {
     const referencesReq = await Postgres.query(
       `
-    
       SELECT
         "references".id as id, "references".reference_name as name,
         categories.category_name as category,
@@ -93,13 +98,15 @@ const getReferenceByTheme = async (req, res) => {
     res.status(200).json({
       references: referencesReq.rows,
     });
-  } catch (err) {
-    res.status(500).json(err);
+  } catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });
   }
 };
 
 const postReferences = async (req, res) => {
-
   const token = req.headers["x-access-token"];
 
   try {
@@ -110,12 +117,9 @@ const postReferences = async (req, res) => {
       message: "Problème d'identifiant",
     });
   }
-
   const data = jwt.decode(req.headers["x-access-token"]);
-  
   try {
 
-  
     const newReferenceBody = req.body;
 
     await Postgres.query(`
@@ -136,14 +140,19 @@ const postReferences = async (req, res) => {
     res.status(202).json({
       message: "Reference added!",
     });
-  } catch (err) {
-    res.status(500).json(err);
+  } catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error:error
+    });
   }
 };
 
 const putReferences = async (_req, res) => {
   try {
-    res.status().json("ok");
+    res.status(200).json({
+      message: " refrtences  has been updated",
+    });
   } catch (err) {
     res.status(500).json(err);
   }
@@ -158,11 +167,14 @@ const deleteReferences = async (req, res) => {
       [id]
     );
 
-    res.status(200).json(results);
-
-    res.status(200).json(results);
-  } catch (err) {
-    res.status(500).json(err);
+    res.status(200).json({
+      message: "references has been deleted..."
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });
   }
 };
 

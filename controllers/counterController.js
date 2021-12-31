@@ -28,12 +28,15 @@ const getHomeCounters = async (_, res) => {
     );
 
     res.status(200).json({
-      nbOfRefs: totalReferenceByContributors.rows[0].references_count,
-      nbOfContributors: totalReferenceByContributors.rows[0].contributors_count,
-      monthRefs: monthRefs.rows[0].count,
+      totalReferences: parseInt(totalReferenceByContributors.rows[0].references_count),
+      totalContributors: parseInt(totalReferenceByContributors.rows[0].contributors_count),
+      monthlyReferences: parseInt(monthRefs.rows[0].count),
     });
-  } catch (err) {
-    res.status(500).json(err);
+  } catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });
   }
 };
 
@@ -43,7 +46,6 @@ const getDashboardUser = async (req, res) => {
   try {
     jwt.verify(token, process.env.JWT_SECRET);
   } catch (error) {
-
     return res.status(400).json({
       message: "Problème d'identifiant",
     });
@@ -65,11 +67,14 @@ const getDashboardUser = async (req, res) => {
     );
 
     res.status(200).json({
-      approvedContributions: totalContributions.rows[0].count,
-      pendingContributions: pendingContributions.rows[0].count,
+      approvedContributions: parseInt(totalContributions.rows[0].count),
+      pendingContributions: parseInt(pendingContributions.rows[0].count),
     });
-  } catch (err) {
-    res.status(500).json(err);
+  } catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });
   }
 };
 
@@ -84,17 +89,16 @@ const getDashboardAdmin = async (req, res) => {
       message: "Problème d'identifiant",
     });
   }
-
-  
   const data = jwt.decode(req.headers["x-access-token"]);
   
   try {
     
     const pendingContributions = await Postgres.query(`
-    SELECT COUNT(*)
-    FROM "references"
-    WHERE "references".reference_status = false
-    ;`);
+      SELECT COUNT(*)
+      FROM "references"
+      WHERE "references".reference_status = false
+      ;
+    `);
     
     // Toutes les contributions approuvées
     const approvedContributions = await Postgres.query(`
@@ -117,14 +121,16 @@ const getDashboardAdmin = async (req, res) => {
     );
       
     res.status(200).json({
-      pendingContributions: pendingContributions.rows[0].count,
-      approvedContributions: approvedContributions.rows[0].count,
-      totalContributors: totalContributors.rows[0].count,
-      totalAdmins: totalAdmins.rows[0].count,
+      pendingContributions: parseInt(pendingContributions.rows[0].count),
+      approvedContributions: parseInt(approvedContributions.rows[0].count),
+      totalContributors: parseInt(totalContributors.rows[0].count),
+      totalAdmins: parseInt(totalAdmins.rows[0].count),
     });
-  } catch (err) {
-    res.status(500).json(err);
-  }
+  } catch (error) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: error
+    });}
 };
 
 module.exports = {

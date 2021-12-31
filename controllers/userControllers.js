@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { Pool } = require("pg");
-const killCookie = require("../utils/killCookie");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
 const passwordValid = /(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,50})$/;
@@ -27,15 +26,18 @@ const newUser = async (req, res) => {
       );
 
       return res.status(201).json({
-        message: `New user ${mail} has been createded`,
+        message: `New user has been createded`,
       });
     } else {
       return res.status(400).json({
-        message: "information is not matched.",
+        message: "the information does not match.",
       });
     }
-  } catch (err) {
-    res.status(500).json(err);
+  } catch (errors) {
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error: errors
+    });
   }
 };
 
@@ -62,45 +64,27 @@ const checkUser = async (req, res) => {
     if (!validPassword) {
       return res.status(401).send({
         accessToken: null,
-        message: "Invalid Password!",
+        message: "Invalid credentials!",
       });
     }
 
     const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, {
       expiresIn: 86400,
     });
-
     res.status(200).json({
-      id: user.rows[0].id,
-      name: user.rows[0].user_name,
-      mail: user.rows[0].user_mail,
-      role: user.rows[0].user_role,
+      userId: user.rows[0].id,
+      userName: user.rows[0].user_name,
+      userEmail: user.rows[0].user_mail,
+      userRole: user.rows[0].user_role,
       accessToken: token,
     });
-  } catch (err) {
-    res.status(500).json(err);
-  }
-};
-
-const modifyUser = async (req, res) => {
-  const userId = req.cookies.jwtData.id;
-  const updateValue = req.body;
-
-  try {
-    const updateTodo = await Postgres.query(
-      'UPDATE "users" SET $1 = $2 WHERE "id" = $3',
-      [updateValue, userId]
-    );
-
-    res.json("user  updated!");
-  } catch (err) {
-    res.status(404).json({
-      message: err.message,
+  } catch (error) {
+    res.status(500).json({
+       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+       error: error
     });
   }
 };
-const logout = async (req, res) => {
-  res.clearCookie("jwt").status(200).json({ message: "You are logout" });
-};
 
-module.exports = { newUser, checkUser, logout, modifyUser };
+
+module.exports = { newUser, checkUser,};
