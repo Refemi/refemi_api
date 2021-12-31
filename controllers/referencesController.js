@@ -69,8 +69,9 @@ const getReferenceById = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
-    });}
+      error: error
+    });
+  }
 };
 const getReferenceByTheme = async (req, res) => {
   const themeName = req.params.theme;
@@ -78,7 +79,6 @@ const getReferenceByTheme = async (req, res) => {
   try {
     const referencesReq = await Postgres.query(
       `
-    
       SELECT
         "references".id as id, "references".reference_name as name,
         categories.category_name as category,
@@ -101,7 +101,7 @@ const getReferenceByTheme = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
+      error: error
     });
   }
 };
@@ -151,8 +151,8 @@ const postReferences = async (req, res) => {
 const putReferences = async (_req, res) => {
   try {
     res.status(200).json({
-        message: " refrtences  has been updated",
-      });
+      message: " refrtences  has been updated",
+    });
   } catch (err) {
     res.status(500).json(err);
   }
@@ -168,13 +168,12 @@ const deleteReferences = async (req, res) => {
     );
 
     res.status(200).json({
-      message:"references has been deleted..."
-    }
-      );
-  }catch (error) {
+      message: "references has been deleted..."
+    });
+  } catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
+      error: error
     });
   }
 };

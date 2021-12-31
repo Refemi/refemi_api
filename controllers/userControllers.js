@@ -36,7 +36,7 @@ const newUser = async (req, res) => {
   } catch (errors) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error : errors
+      error: errors
     });
   }
 };
@@ -81,11 +81,10 @@ const checkUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({
        message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-       error : error
+       error: error
     });
   }
 };
-
 
 
 module.exports = { newUser, checkUser,};

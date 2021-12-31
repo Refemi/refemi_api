@@ -18,7 +18,7 @@ const getAllThemes = async (_, response) => {
     themes = themesResult.rows;
   } catch (error) {
     res.status(500).json({
-      Error:error
+      error: error
     });
   }
 
@@ -46,7 +46,7 @@ const getTheme = async (request, response) => {
   }catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
+      error: error
     });}
 
   response.status(200).json({ 
@@ -127,7 +127,7 @@ const putTheme = async (request, response) => {
   }catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
+      error: error
     });}
 };
 
@@ -146,7 +146,7 @@ const deleteTheme = async (request, response) => {
   } catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
+      error: error
     });}
 
   response.status(200).json({

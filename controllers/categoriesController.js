@@ -19,7 +19,7 @@ const getAllCategories = async (_, response) => {
   }catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
+      error: error
     });
   }
   await response.status(200).json({
@@ -54,7 +54,7 @@ const getSubCategories = async (request, response) => {
   catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
+      error: error
     });}
   response.status(200).json({
     subCategories: subCategories,

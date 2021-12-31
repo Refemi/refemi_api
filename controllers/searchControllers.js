@@ -13,17 +13,17 @@ const getAllSearch = async (req, res) => {
     if (result.rowCount === 0) {
       return res.status(404).json({
         message: "this search result does not exist in the database",
-      }
-      );
+      });
     }
     res.status(200).json({
-      search : result.rows});
+      search: result.rows
+    });
 
     
   }catch (error) {
     res.status(500).json({
       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
-      error:error
+      error: error
     });}
 };
 
