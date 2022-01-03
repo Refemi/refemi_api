@@ -92,22 +92,6 @@ const getDashboardAdmin = async (req, res) => {
   const data = jwt.decode(req.headers["x-access-token"]);
   
   try {
-    
-    const pendingContributions = await Postgres.query(`
-      SELECT COUNT(*)
-      FROM "references"
-      WHERE "references".reference_status = false
-      ;
-    `);
-    
-    // Toutes les contributions approuvées
-    const approvedContributions = await Postgres.query(`
-      SELECT COUNT(*)
-      FROM "references"
-      INNER JOIN "users" ON "users".id = "references".reference_moderator_id
-      WHERE "references".reference_status = true;
-    ;`);
-
 
     // Nombre total de contributeurs (contributors)
     const totalContributors = await Postgres.query(`
@@ -121,8 +105,6 @@ const getDashboardAdmin = async (req, res) => {
     );
       
     res.status(200).json({
-      pendingContributions: parseInt(pendingContributions.rows[0].count),
-      approvedContributions: parseInt(approvedContributions.rows[0].count),
       totalContributors: parseInt(totalContributors.rows[0].count),
       totalAdmins: parseInt(totalAdmins.rows[0].count),
     });

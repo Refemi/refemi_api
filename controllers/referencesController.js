@@ -37,6 +37,37 @@ const getReferences = async (req, res) => {
     });
   }
 };
+const getAllReferences = async (_, res) => {
+  try {
+    const referencesReq = await Postgres.query(`
+      SELECT
+        "references".id AS id, "references".reference_name AS name,
+        categories.category_name AS category,
+        array_agg(themes.theme_label)  AS themes,
+        "references".reference_country_name AS country,
+        "references".reference_date AS date,
+        "references".reference_status AS status,
+        user_name
+      FROM "references"
+      JOIN categories ON "references".reference_category_id = categories.id
+      LEFT JOIN sections ON categories.section_id = sections.id
+      LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
+      LEFT JOIN themes ON themes.id = rt.reference_theme_id
+      LEFT JOIN users ON users.id = "references".reference_contributor_id
+      GROUP BY "references".id, user_name, categories.category_name;
+    `);
+
+    res.status(200).json({
+      references: referencesReq.rows,
+    });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
+      error:error
+    });
+  }
+}
 const getReferenceById = async (req, res) => {
   const categoryId = req.params.id;
 
@@ -180,6 +211,7 @@ const deleteReferences = async (req, res) => {
 
 module.exports = {
   getReferences,
+  getAllReferences,
   getReferenceById,
   getReferenceByTheme,
   postReferences,
