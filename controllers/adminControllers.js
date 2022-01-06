@@ -30,6 +30,7 @@ const  getAdmin=async(req,res)=>{
     });}
     
 }
+
        
 const  modifyAdmin=async(req,res)=>{
     

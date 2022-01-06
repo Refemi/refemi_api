@@ -1,8 +1,6 @@
 const nodemailer = require("nodemailer");
 const mailgen = require("mailgen");
-const { pool } = require("pg");
 const { EMAIL, PASSWORD, MAIN_URL } = require("../config.env");
-const { response } = require("express");
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   secure: true,
@@ -46,19 +44,4 @@ const signup = (req, res) => {
     .catch((error) => console.error(error));
 };
 module.exports = { signup };
-// const mailOptions ={
-//     from:"email",
-//     to:"to",
-//     subject:"subject",
-//     Text:"message"
-// };
-// stmpTransport.sendMail(mailOptions,function(error,reponse){
-//     if(error){
-//         console.log(error);
-//     }
-//     else{
-//         console.log("email sented")
-//     }
-// })
 
-// module.exports = send;

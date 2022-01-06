@@ -1,15 +1,13 @@
 const jwt = require("jsonwebtoken");
-
-verifyToken = (res, res, next) => {
-  let token = req.headers["x-access-token"];
-
-  if (!token) {
-    return res.status(403).send({
-      message: "No token provided",
-    });
-  }
-
-  jwt.verify(token, SECRET, (err, decoded) => {
+const dotenv = require("dotenv");
+dotenv.config({
+  path: "../config.env",
+});
+verifyToken = (req, res, next) => {
+    const token = req.headers["x-access-token"];
+    console.log("t", token)
+    try {
+      jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
       return res.status(401).send({
         message: "Unauthorized",
@@ -19,7 +17,14 @@ verifyToken = (res, res, next) => {
     req.userID = decoded.id;
     next();
   });
-};
+   
+  } catch (error) {
+
+    return res.status(400).json({
+      message: "Problème d'identifiant",
+    });
+  }
+}
 
 isAdmin = (req, res, next) => {
   // Vérifier avec postGre si l'utilistateur est admin
@@ -48,8 +53,8 @@ isModeratorOrAdmin = (req, res, next) => {
 };
 
 module.exports = {
-  verifyToken: verifyToken,
-  isAdmin: isAdmin,
-  isModerator: isModerator,
-  isModeratorOrAdmin: isModeratorOrAdmin,
+  verifyToken,
+  isAdmin,
+  isModerator,
+  isModeratorOrAdmin,
 };
