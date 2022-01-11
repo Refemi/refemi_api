@@ -20,10 +20,7 @@ const getReferences = async (req, res) => {
       LEFT JOIN themes ON themes.id = rt.reference_theme_id
       WHERE section_name = $1
       GROUP BY "references".id, categories.category_name;
-
-    `,
-      [categoryName]
-    );
+    `,  [categoryName]);
 
     res.status(200).json({
       references: referencesReq.rows,
@@ -40,7 +37,9 @@ const getAllReferences = async (_, res) => {
     const referencesReq = await Postgres.query(`
       SELECT
         "references".id AS id, "references".reference_name AS name,
-        categories.category_name AS category,
+        section_name AS "section",
+        categories.category_name AS category_name,
+        categories.category_label AS category_label,
         array_agg(themes.theme_label)  AS themes,
         "references".reference_country_name AS country,
         "references".reference_creation_date AS creation_date,
@@ -54,7 +53,7 @@ const getAllReferences = async (_, res) => {
       LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
       LEFT JOIN themes ON themes.id = rt.reference_theme_id
       LEFT JOIN users ON users.id = "references".reference_contributor_id
-      GROUP BY "references".id, user_name, categories.category_name;
+      GROUP BY "references".id, user_name, section_name, categories.category_name, categories.category_label;
     `);
 
     res.status(200).json({
@@ -135,27 +134,29 @@ const getReferenceByTheme = async (req, res) => {
   }
 };
 const getReferenceByUser = async (req, res) => {
-  const token = req.headers["x-access-token"];
+
 
   try {
     const references = await Postgres.query(`
-      SELECT
-        "references".id AS id, "references".reference_name AS name,
-        categories.category_name AS category,
-        array_agg(themes.theme_label)  AS themes,
-        "references".reference_country_name AS country,
-        "references".reference_date AS date,
-        "references".reference_status AS status,
-        "references".reference_content AS content,
-        user_name
-      FROM "references"
-      JOIN categories ON "references".reference_category_id = categories.id
-      LEFT JOIN sections ON categories.section_id = sections.id
-      LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-      LEFT JOIN themes ON themes.id = rt.reference_theme_id
-      LEFT JOIN users ON users.id = "references".reference_contributor_id
-      WHERE users.user_name = $1
-      GROUP BY "references".id, user_name, categories.category_name;
+    SELECT
+      "references".id AS id, "references".reference_name AS name,
+      "sections".section_name AS "section",
+      categories.category_name AS category_name,
+      categories.category_label AS category_label,
+      array_agg(themes.theme_label)  AS themes,
+      "references".reference_country_name AS country,
+      "references".reference_date AS date,
+      "references".reference_status AS status,
+      "references".reference_content AS content,
+      user_name
+    FROM "references"
+    JOIN categories ON "references".reference_category_id = categories.id
+    LEFT JOIN sections ON categories.section_id = sections.id
+    LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
+    LEFT JOIN themes ON themes.id = rt.reference_theme_id
+    LEFT JOIN users ON users.id = "references".reference_contributor_id
+    WHERE users.user_name = $1
+    GROUP BY "references".id, user_name, "sections".section_name, categories.category_name, categories.category_label;
 
     `, [req.params.userName]);
 
