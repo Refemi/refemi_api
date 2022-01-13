@@ -46,10 +46,38 @@ const deleteAdmin = async (req,res) => {
   }
 }
 
+const getThemes = async (_, response) => {
+  let themes;
+
+  try {
+    const themesQuery = `
+      SELECT
+        id, theme_name AS "name", theme_label AS label, theme_active AS active
+      FROM themes
+    `;
+    const themesResult = await Postgres.query(themesQuery);
+
+    if (themesResult.rows.length === 0) {
+      return response.status(404).json({
+        message: "There are no registered themes",
+      });
+    }
+
+    await response.status(200).json({
+      themes: themesResult.rows,
+    });
+  } catch (error) {
+    response.status(500).json({
+      error: error
+    });
+  }
+};
+
 
 module.exports = {
   creatAdmin,
-  modifyAdmin,
+  deleteAdmin,
   getAdmin,
-  deleteAdmin
+  getThemes,
+  modifyAdmin
 };  

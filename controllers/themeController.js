@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
@@ -55,21 +55,40 @@ const getTheme = async (request, response) => {
 };
 
 const postTheme = async (request, response) => {
-  let newTheme;
+  const token = request.headers["x-access-token"];
 
   try {
-    newTheme = request.body.name;
+    jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    return response.status(400).json({
+      message: "Problème d'identifiant",
+    });
+  }
 
-    if (!newTheme) {
+  const data = jwt.decode(token);
+
+  try {
+    const { name, label } = request.body;
+
+    if (!name && !label) {
       return response.status(400).json({
         message: "The theme name is missing",
       });
     }
 
-    const newThemeQuery = 'INSERT INTO "themes" ("theme_name") VALUES ($1)';
-    const newThemeArgument = [newTheme];
+    const newThemeQuery = `INSERT
+      INTO "themes" ("theme_name", "theme_label", "theme_active")
+      VALUES ($1, $2, $3)
+    ;`;
+    const newThemeArgument = [name, label, false];
 
     await Postgres.query(newThemeQuery, newThemeArgument);
+    response.status(201).json({
+      theme: {
+        name,
+        label
+      }
+    })
   } catch (error) {
     switch (error.code) {
       case "23505":
@@ -93,11 +112,6 @@ const postTheme = async (request, response) => {
         });
     }
   }
-
-  response.status(200).json({
-    message: "ok",
-    newTheme: newTheme,
-  });
 };
 
 const putTheme = async (request, response) => {
