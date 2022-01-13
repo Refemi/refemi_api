@@ -4,7 +4,7 @@ const router = express.Router();
 const {
   getAllCategories,
   getSubCategories,
-} = require("../controllers/categoriesController");
+} = require("../controller/categoriesController");
 
 router.get("/", getAllCategories);
 router.get("/:category_name", getSubCategories);

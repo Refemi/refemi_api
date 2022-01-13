@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
- const{creatAdmin,modifyAdmin,getAdmin,deleteAdmin}=require("../controllers/adminControllers");
+ const{creatAdmin,modifyAdmin,getAdmin,deleteAdmin}=require("../controller/adminControllers");
 
  router.post("/",creatAdmin);
  router.get("/",getAdmin)

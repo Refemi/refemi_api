@@ -5,7 +5,7 @@ const {
   getHomeCounters,
   getDashboardUser,
   getDashboardAdmin,
-} = require("../controllers/counterController");
+} = require("../controller/counterController");
 
 router.get("/homecounter", getHomeCounters);
 router.get("/dashboard/contributor", getDashboardUser);

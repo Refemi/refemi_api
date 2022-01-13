@@ -10,7 +10,7 @@ const {
     putTheme,
     deleteTheme
 
-} = require("../controllers/themeController");
+} = require("../controller/themeController");
 
 
 router.get("/", getAllThemes)

@@ -1,7 +1,11 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
-const ErrorHander = require("../utils/errorhander");
-const catchAsyncErrors = require("../middlewares/catchAsyncErrors");
+
+// Errors Route
+const ErrorHander = require("../../../utils/errorhander");
+const catchAsyncErrors = require("../../../middlewares/catchAsyncErrors");
+
+// get all Categories
 const getAllCategories = catchAsyncErrors(async (_, response, next) => {
   let categories;
 
@@ -19,6 +23,8 @@ const getAllCategories = catchAsyncErrors(async (_, response, next) => {
     categories: categories,
   });
 });
+
+//get SubCategories
 
 const getSubCategories = catchAsyncErrors(async (request, response,next) => {
   let subCategories;

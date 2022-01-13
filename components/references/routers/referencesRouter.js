@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const{ verifyToken } = require("../middlewares/authJwt")
+const{ verifyToken } = require("../../../middlewares/authJwt")
 
 const {
 
@@ -12,7 +12,7 @@ const {
   deleteReferences,
   getReferenceByTheme,
 
-} = require("../controllers/referencesController");
+} = require("../controller/referencesController");
 
 router.get("/category/:category", getReferences);
 router.get("/theme/:theme", getReferenceByTheme)

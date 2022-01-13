@@ -1,8 +1,12 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
-const ErrorHander = require("../utils/errorhander");
-const catchAsyncErrors = require("../middlewares/catchAsyncErrors");
 
+// Errors Route
+const ErrorHander = require("../../../utils/errorhander");
+const catchAsyncErrors = require("../../../middlewares/catchAsyncErrors");
+
+
+//get Search info
 const getAllSearch = catchAsyncErrors(async (req, res) => {
   const search = req.query.answer;
 

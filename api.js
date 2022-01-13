@@ -13,19 +13,16 @@ app.use(express.json());
 app.use(cors(corsOptions));
 
 
-const referencesRouter = require("./routers/referencesRouter");
-const loginRouter = require("./routers/loginRouter");
-const registerRouter = require("./routers/registerRouter");
-const counterRouter = require("./routers/counterRouter");
-const adminRouter = require("./routers/adminRouter");
-const categoriesRouter = require("./routers/categoriesRouter");
-const themesRouter = require("./routers/themesRouter");
-const searchRouter = require("./routers/searchRouter");
-const contactRouter = require("./routers/contactRouter");
-
-
-
-
+// Route Imports
+const referencesRouter = require("./components/references/routers/referencesRouter");
+const loginRouter = require("./components/user/routers/loginRouter");
+const registerRouter = require("./components/user/routers/registerRouter");
+const counterRouter = require("./components/counter/routers/counterRouter");
+const adminRouter = require("./components/admin/routers/adminRouter");
+const categoriesRouter = require("./components/categories/routers/categoriesRouter");
+const themesRouter = require("./components/theme/routers/themesRouter");
+const searchRouter = require("./components/search/routers/searchRouter");
+const contactRouter = require("./components/contact/contactRouter");
 
 app.use("/references", referencesRouter);
 app.use("/login", loginRouter);
@@ -37,6 +34,7 @@ app.use("/themes", themesRouter);
 app.use("/search", searchRouter);
 app.use("/contact", contactRouter);
 
+// Middleware for Errors
 app.use(errorMiddleware)
 
 module.exports = app;

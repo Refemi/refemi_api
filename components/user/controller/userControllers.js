@@ -1,12 +1,16 @@
 const jwt = require("jsonwebtoken");
-const ErrorHander = require("../utils/errorhander");
-const catchAsyncErrors = require("../middlewares/catchAsyncErrors")
 const bcrypt = require("bcrypt");
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
+// Errors Route
+const catchAsyncErrors = require("../../../middlewares/catchAsyncErrors")
+const ErrorHander = require("../../../utils/errorhander");
+
+// password Regex
 const passwordValid = /(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,50})$/;
 
+// register
 const newUser = catchAsyncErrors(async (req, res,next) => {
   const { name, mail, password } = req.body;
   // Regex : needs at least a number and 6 characters
@@ -32,6 +36,7 @@ const newUser = catchAsyncErrors(async (req, res,next) => {
   
 });
 
+// login
 const checkUser = catchAsyncErrors(async(req, res, next) => {
   const { mail, password } = req.body;
 
