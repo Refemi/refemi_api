@@ -6,8 +6,6 @@ const { ErrorSectionNotFound } = require("./sectionsErrors");
 
 /**
  * @description CRUD Sections Class
- * @class Controler
- * @extends {Postgres}
  */
 class Sections {
   /** 
@@ -29,7 +27,9 @@ class Sections {
   
       const sections = sectionsResult.rows;
   
-      await response.status(200).json({ sections });
+      await response.status(200).json({
+        sections
+      });
     } catch (error) {
       next(error);
     }
@@ -42,32 +42,35 @@ class Sections {
     // TODO: Get one section
     response.status(200).json({
       messsage: "Need to do",
+      sections
     });
   };
   /**
    * @description Add one section
    * @route GET api/v1/sections
-   * @param {String} request.body.name
-   * @param {String} request.body.label
+   * @param {string} request.body.name
+   * @param {string} request.body.label
    */
   async addOne (request, response, next) {
     // TODO: Create a section
     response.status(201).json({
-      message: "Need to do"
+      message: "Need to do",
+      sections
     });
   };
   /**
    * @description Update one section 
    * @route PUT api/v1/sections/:id
-   * @param {String} request.body.name
-   * @param {String} request.body.label
-   * @param {String} request.body.section
-   * @param {Boolean} request.body.active //TODO: Add active field
+   * @param {string} request.body.name
+   * @param {string} request.body.label
+   * @param {string} request.body.section
+   * @param {boolean} request.body.active //TODO: Add active field
    */
   async updateOne (request, response, next) {
     // TODO: Update a category
     response.status(200).json({
-      message: "Need to do"
+      message: "Need to do",
+      sections
     });
   };
   /** 
@@ -77,9 +80,11 @@ class Sections {
   async deleteOne (request, response, next) {
     // TODO: Delete a category
     response.status(200).json({
-      messsage: "Need to do"
+      messsage: "Need to do",
+      sections
     });
   };
 }
+
 
 module.exports = new Sections();

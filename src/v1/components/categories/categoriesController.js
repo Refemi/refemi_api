@@ -1,31 +1,30 @@
+// PostGreSQL dependencies
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
 // Errors Routes
 const { ErrorCategoriesNotFound } = require("./categoriesErrors");
-const catchAsyncErrors = require("../../middlewares/catchAsyncErrors");
 
 class Categories {
-
   /** 
    * @description Get all categories
    * @route GET /categories
    */
   async getAll (_, response, next) {
-
     try {
       const categoriesQuery =`
-        SELECT
-          id, category_name AS name, category_label AS label
-        FROM categories
+        SELECT categories.id, category_name AS name, category_label as label, section_id
+          FROM categories
+        INNER JOIN sections ON sections.id = section_id
       `;
+
       const categoriesResult = await Postgres.query(categoriesQuery);
   
       if (categoriesResult.rows.length === 0) {
-          return next(new ErrorCategoriesNotFound())
+          throw new ErrorCategoriesNotFound();
       }
   
-      await response.status(200).json({ categories: categoriesResult.rows });
+      response.status(200).json({ categories: categoriesResult.rows });
     } catch (error) {
       next(error);
     }
@@ -40,9 +39,8 @@ class Categories {
       const { section_id } = request.params;
 
       const categoriesQuery = `
-        SELECT categories.id, category_name AS name, category_label as label, section_id
+        SELECT categories.id, category_name AS name, category_label as label
         FROM categories
-        INNER JOIN sections ON sections.id = section_id
         WHERE section_id = $1;
       `;
       const categoriesArgument = [section_id];
@@ -50,7 +48,7 @@ class Categories {
       const categoriesResult = await Postgres.query(categoriesQuery, categoriesArgument);
       
       if (categoriesResult.rows.length === 0) {
-        return next(new ErrorCategoriesNotFound(section_id))
+        throw new ErrorCategoriesNotFound(section_id);
       }
 
       categories = categoriesResult.rows;
@@ -59,11 +57,11 @@ class Categories {
         categories: categories,
       })
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
   /** Get one category by id
-   * @route GET /categories
+   * @route GET /categories/:id
    */
   async getOne (request, response, next) {
     // TODO: Get one category
@@ -73,10 +71,10 @@ class Categories {
   };
   /** Add one category 
    * @route GET /categories
-   * @param {Object} category
-   * @param {String} category.name
-   * @param {String} category.label
-   * @param {Number} category.section_id
+   * @param {object} category
+   * @param {string} category.name
+   * @param {string} category.label
+   * @param {number} category.section_id
    */
   async addOne (request, response, next) {
     // TODO: Create a category
@@ -86,11 +84,11 @@ class Categories {
   };
   /** Update one category  
    * @route PUT /categories/:id
-   * @param {Object} category
-   * @param {String} category.name
-   * @param {String} category.label
-   * @param {String} category.section
-   * @param {Boolean} category.active
+   * @param {object} category
+   * @param {string} category.name
+   * @param {string} category.label
+   * @param {string} category.section
+   * @param {boolean} category.active
    */
   async updateOne (request, response, next) {
     // TODO: Update a category
@@ -108,5 +106,6 @@ class Categories {
     });
   };
 }
+
 
 module.exports = new Categories();

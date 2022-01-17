@@ -1,15 +1,14 @@
 const ErrorHandler = require("../../classes/ErrorHandler");
 
 class ErrorNodeMailService extends ErrorHandler {
-  constructor (statusCode = 404) {
-    super("There are not active categories", statusCode);
+  constructor (error) {
+    super(error);
   } 
 }
-
 class ErrorMailData extends ErrorHandler {
-  constructor (data) {
+  constructor (mail) {
     super(Object
-      .entries(data).reduce((errorData, [field, value]) => {
+      .entries(mail).reduce((errorData, [field, value]) => {
         if (value) {
           errorData.push({
             [field]: value
@@ -22,7 +21,8 @@ class ErrorMailData extends ErrorHandler {
   }
 }
 
+
 module.exports = {
-    ErrorNodeMailService,
-    ErrorMailData
+  ErrorNodeMailService,
+  ErrorMailData
 }

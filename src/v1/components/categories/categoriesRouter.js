@@ -9,7 +9,7 @@ const Controller = require("./categoriesController");
 router.get("/", Controller.getAll);
 router.get('/sections/:section_id', Controller.getAllBySection)
 router.get("/:id", Controller.getOne);
-router.post("/", isAdmin, Controller.addOne);
+router.post("/", Controller.addOne);
 router.put("/:id", Controller.updateOne);
 router.delete("/:id", isAdmin, Controller.deleteOne);
 

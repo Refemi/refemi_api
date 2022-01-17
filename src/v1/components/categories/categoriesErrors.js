@@ -6,6 +6,7 @@ class ErrorCategoriesNotFound extends ErrorHandler {
   } 
 }
 
+
 module.exports = {
   ErrorCategoriesNotFound
 }

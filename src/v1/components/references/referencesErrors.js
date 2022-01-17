@@ -2,9 +2,17 @@ const ErrorHandler = require('../../classes/ErrorHandler');
 
 class ErrorReferenceNotFound extends ErrorHandler {
   constructor() {
-    super('Reference not found', 404);
+    super('The reference was not found', 404);
   }
 }
+class ErrorReferencesNotFound extends ErrorHandler {
+  constructor() {
+    super('No references were found', 404);
+  }
+}
+
+
 module.exports = {
-  ErrorReferenceNotFound
+  ErrorReferenceNotFound,
+  ErrorReferencesNotFound
 }

@@ -14,7 +14,7 @@ router.get("/:id", Controller.getOne);
 // TODO: add permission middleware
 router.post("/", verifyToken, Controller.addOne);
 router.put("/:id", verifyToken, Controller.updateOne);
-router.delete("/:id", isAdmin, Controller.deleteOne);
+router.delete("/:id", verifyToken, isAdmin, Controller.deleteOne);
 
 
 module.exports = router;

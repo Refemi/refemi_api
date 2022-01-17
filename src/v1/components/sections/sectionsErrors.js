@@ -6,6 +6,7 @@ class ErrorSectionNotFound extends ErrorHandler {
   }
 }
 
+
 module.exports = {
   ErrorSectionNotFound
 }
