@@ -87,17 +87,20 @@ class References {
       const referencesRequest = `  
         SELECT
           "references".id AS id, "references".reference_name AS name,
-          categories.category_name AS category,
-          array_agg(themes.theme_label) AS themes,
-          "references".reference_country_name AS country,
-          "references".reference_date AS date,
-          "references".reference_content AS content
+          section_id AS "section",
+          categories.id AS category, 
+          array_agg(themes.id) AS themes,
+          reference_status AS status,
+          reference_contributor_id AS contributor,
+          reference_country_name AS country,
+          reference_creation_date AS created_at,
+          reference_validation_date AS validated_at
         FROM "references"
-        JOIN categories ON "references".reference_category_id = categories.id
+        JOIN categories ON reference_category_id = categories.id
         LEFT JOIN sections ON categories.section_id = sections.id
         LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
         LEFT JOIN themes ON themes.id = rt.reference_theme_id
-        GROUP BY "references".id, categories.category_name;
+        GROUP BY "references".id, section_id, categories.id;
       `;
 
       const referencesResult = await Postgres.query(referencesRequest);
@@ -117,7 +120,7 @@ class References {
    * Get reference by section id
    * @route GET /api/v1/references/section/:id
    */
-  async getAllBySection (request, response) {
+  async getAllBySection (request, response, next) {
     try {
       const { id } = request.params;
       const referencesRequest = `
@@ -129,10 +132,10 @@ class References {
           "references".reference_date AS date
         FROM "references"
         JOIN categories ON "references".reference_category_id = categories.id
-        LEFT JOIN sections ON categories.section_id = sections.id
+        LEFT JOIN sections ON "categories".section_id = sections.id
         LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
         LEFT JOIN themes ON themes.id = rt.reference_theme_id
-        WHERE "categories.section_id" = $1
+        WHERE "categories".section_id = $1
         GROUP BY "references".id, categories.category_name;
       `;
 

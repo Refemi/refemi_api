@@ -5,10 +5,10 @@ const Controller = require("./sectionsControllers");
 
 
 router.get("/", Controller.getAll);
-router.get("/:section_name", Controller.getOne);
+router.get("/:id", Controller.getOne);
 router.post('/', Controller.addOne)
-router.put('/:section_name', Controller.updateOne);
-router.delete('/:section_name', Controller.deleteOne);
+router.put('/:id', Controller.updateOne);
+router.delete('/:id', Controller.deleteOne);
 
 
 module.exports = router;
