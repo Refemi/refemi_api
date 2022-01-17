@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
+const roles = require('../config/roles');
+
 const checkRights = async (req, res, next) => {
   const data = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET);
   req.cookies.jwtData = data;
@@ -26,18 +28,19 @@ const checkRights = async (req, res, next) => {
   }
 };
 
-const isAdmin = (req, res, next) => {
-  // TODO: Vérifier avec postGre si l'utilistateur est admin
-  console.log(req)
-  res.status(403).send({
+const isAdmin = (request, response, next) => {
+  // TODO: Check with postGre if the user is admin.
+  if (request.roleId === roles.ADMIN) {
+    return next()
+  }
+
+  response.status(403).send({
     message: "Require Admin Role!",
   });
-
-  return;
 };
 
 const isModerator = (req, res, next) => {
-  // Vérifier avec postGre si l'utilisateur est modo
+  // Check with postGre if the user is modo
 
   res.status(403).send({
     message: "Require Moderator Role!",
@@ -45,7 +48,7 @@ const isModerator = (req, res, next) => {
 };
 
 const canModerate = (req, res, next) => {
-  // Vérifier le type du rôle de l'utilisateur
+  // Check the user's role type
 
   res.status(403).send({
     message: "Require Moderator or Admin Role!",
