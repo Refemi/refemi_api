@@ -1,7 +1,11 @@
+// PostGreSQL dependencies
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
+const { User } = require('./auth')
+
 const {
+  ErrorHandler,
   ErrorUserNotFound,
   ErrorUserCredential,
   ErrorUserExist
@@ -9,14 +13,13 @@ const {
 
 /**
  * @description Authentification Class
- * @class Controler
- * @extends {Postgres}
  */
 class Auth {
-  /** Add one user
-   * @param {String} name - user name 
-   * @param {String} mail - user mail
-   * @param {String} password - user password hashed
+  /**
+   * Add one user
+   * @param {string} request.body.name - user name 
+   * @param {string} request.body.mail - user mail
+   * @param {string} request.body.password - user password hashed
    */
   async addOne (request, response) {
     try {
@@ -39,53 +42,57 @@ class Auth {
           [name, mail, bcryptPassword]
         );
 
-        return response.status(201).json({
+        response.status(201).json({
           message: `New user has been createded`,
         });
       }
     } catch (error) {
-      return ErrorUserExist
+      next(ErrorUserExist());
     }
   }
-  /** Add one user
-   * @param {String} mail - user mail
-   * @param {String} password - user password hashed
+  /**
+   * Add one user
+   * @param {string} request.body.mail - user mail
+   * @param {string} request.body.password - user password hashed
    */
-   async getOne () {
-    const { mail, password } = req.body;
+   async getOne (request, response, next) {
+    try {
+      const { mail, password } = request.body;
+      const userRequest = `
+        SELECT * FROM "users" WHERE user_mail= $1
+      `;
+      const userResult = await Postgres.query(userRequest, [mail]);
 
-    const user = await Postgres.query(
-      'SELECT * FROM "users" WHERE user_mail= $1',
-      [mail]
-    );
+      if (userResult.rows.length === 0) {
+        throw new ErrorUserNotFound();
+      }
 
-    if (user.rows.length === 0) {
-       return next(new ErrorHander("Invalid Credential", 401));
+      const user = new User(userResult.rows[0]);
+
+      if (!(await user.valideCredentials(password))) {
+        throw new ErrorUserCredential();
+      }
+
+      response.status(200).json({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        accessToken: user.newToken(),
+      });
+    } catch (error) {
+      if (
+        error instanceof ErrorUserNotFound || 
+        error instanceof ErrorUserCredential ||
+        error instanceof ErrorUserExist
+      ) { next(error) } else {
+        next(new ErrorHandler(error.message, error.status));
+      }
     }
-
-    const validPassword = await bcrypt.compare(
-      password,
-      user.rows[0].user_password
-    );
-
-    if (!validPassword) {
-       return next(new ErrorHander("Invalid Credential", 401));
-    }
-
-    const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, {
-      expiresIn: 86400,
-    });
-    res.status(200).json({
-      userId: user.rows[0].id,
-      userName: user.rows[0].user_name,
-      userEmail: user.rows[0].user_mail,
-      userRole: user.rows[0].user_role,
-      accessToken: token,
-    });
-  }
-  closeOne () {
-    return ErrorUserCredential
   }
 }
+
 
 module.exports = new Auth();
