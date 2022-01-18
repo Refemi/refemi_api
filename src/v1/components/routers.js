@@ -11,13 +11,14 @@ router.get('/', (_, response) => {
       'api/v1/auth'
     ]
   });
-})
+});
 
-router.use('/sections', require('./sections'))
-router.use('/categories', require('./categories'))
-router.use('/themes', require('./themes'))
-router.use('/references', require('./references'))
-router.use('/auth', require('./auth'))
+router.use('/sections', require('./sections'));
+router.use('/categories', require('./categories'));
+router.use('/themes', require('./themes'));
+router.use('/references', require('./references'));
+router.use('/auth', require('./auth'));
+router.use('/users', require('./users'));
 
 
 module.exports = router;
