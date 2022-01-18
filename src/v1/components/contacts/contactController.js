@@ -11,7 +11,7 @@ class Contacts {
    * @param {string} request.params.mail - Mail of the user
    * @param {string} request.params.message - Message of the user
    */
-  async addOne (request, response, next) {
+  async sendMessage(request, response, next) {
     try {
       const { username, email, message } = request.body;
       const error = Mailer.send(username, email, message);
@@ -21,13 +21,12 @@ class Contacts {
       }
 
       response.status(201).json({
-        message: "Message sent"
+        message: "Message sent",
       });
     } catch (error) {
       next(error);
     }
   }
 }
-
 
 module.exports = new Contacts();

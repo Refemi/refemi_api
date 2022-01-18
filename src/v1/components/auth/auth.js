@@ -1,6 +1,5 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 /**
  * @description User Auth Class
@@ -11,7 +10,7 @@ const bcrypt = require('bcrypt');
  * @param {string} User.role
  */
 class User {
-  constructor (User) {
+  constructor(User) {
     this.id = User.id;
     this.name = User.user_name;
     this.email = User.user_mail;
@@ -20,33 +19,36 @@ class User {
   }
   /**
    * Checks the user credentials
-   * @param {string} password 
+   * @param {string} password
    * @returns {boolean}
    */
-  async valideCredentials (password) {
-    const passwordValid = await bcrypt.compare(password, this.password);
+  async checkCredentials(password) {
+    const isPasswordValid = await bcrypt.compare(password, this.password);
 
-    if (!passwordValid) {
-      return false
+    if (!isPasswordValid) {
+      return false;
     }
 
-    return true
-  };
+    return true;
+  }
   /**
    * Generates a new token
    * @returns {string} token
-  */
-  newToken () {
-    return jwt.sign({
-      id: this.id,
-      role: this.role
-    }, process.env.JWT_SECRET, {
-      expiresIn: 86400,
-    });
-  };
+   */
+  getNewToken() {
+    return jwt.sign(
+      {
+        id: this.id,
+        role: this.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: 86400,
+      }
+    );
+  }
 }
 
-
 module.exports = {
-  User
+  User,
 };

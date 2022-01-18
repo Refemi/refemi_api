@@ -1,19 +1,15 @@
 const nodemailer = require("nodemailer");
-const service = process.env.NODEMAILER_SERVICE
-const {
-  ErrorMailData,
-  ErrorNodeMailService
-} = require("./contactErrors");
-
+const service = process.env.NODEMAILER_SERVICE;
+const { ErrorMailData, ErrorNodeMailService } = require("./contactErrors");
 
 class Mailer {
-  constructor () {
+  constructor() {
     this.node = nodemailer.createTransport({
       service: service,
       auth: {
         user: process.env.NODEMAILER_EMAIL,
         pass: process.env.NODEMAILER_PASSWORD,
-      }
+      },
     });
 
     if (!this.verify()) {
@@ -21,19 +17,19 @@ class Mailer {
     }
   }
 
-  verify = (_, _, next) => {
+  verify = () => {
     try {
       this.node.verify((error) => {
         if (error) {
-          throw new ErrorNodeMailService(error)
+          throw new ErrorNodeMailService(error);
         }
 
-        return false
-      })
+        return false;
+      });
     } catch (error) {
       return error;
     }
-  }
+  };
   send = (username, email, message) => {
     try {
       if (!username || !email || !message) {
@@ -43,12 +39,12 @@ class Mailer {
       const mail = {
         from: username,
         to: process.env.NODEMAILER_EMAIL,
-        subject: 'Formulaire de contact',
+        subject: "Formulaire de contact",
         html: `
           <p>Nom: ${username}</p>
           <p>Email: ${email}</p>
           <p>Message: ${message}</p>
-        `
+        `,
       };
 
       this.node.sendMail(mail, (error) => {
@@ -57,12 +53,11 @@ class Mailer {
         }
       });
     } catch (error) {
-      next(error)
+      next(error);
     }
-  }
+  };
 }
 
-
-module.exports = { 
-  Mailer
-}
+module.exports = {
+  Mailer,
+};

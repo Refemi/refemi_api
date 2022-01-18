@@ -1,4 +1,3 @@
-const router = require('./categoriesRouter');
-
+const router = require("./categoriesRouters");
 
 module.exports = router;

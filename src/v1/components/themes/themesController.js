@@ -4,18 +4,18 @@ const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 const {
   ErrorHandler,
   ErrorThemesExist,
-  ErrorThemesNotFound
-} = require('./themesErrors')
+  ErrorThemesNotFound,
+} = require("./themesErrors");
 
 /**
-  * @description CRUD for themes
-  */
+ * @description CRUD for themes
+ */
 class Themes {
   /**
    * Get all themes
    * @route GET /themes
    */
-  getAll = async (_, response) => {
+  getAllThemes = async (_, response) => {
     try {
       let themes;
 
@@ -29,8 +29,10 @@ class Themes {
         throw new ErrorThemesNotFound();
       }
 
+      themes = themesResult.rows;
+
       await response.status(200).json({
-        themes: themesResult.rows,
+        themes: themes,
       });
     } catch (error) {
       next(error);
@@ -41,10 +43,9 @@ class Themes {
    * @route GET /themes/:id
    * @return {object} theme
    */
-  getOne = async (request, response, next) => {
-
+  getOneTheme = async (request, response, next) => {
     try {
-      const themeQuery =`
+      const themeQuery = `
         SELECT id, "theme_name" AS name FROM "themes" WHERE LOWER("theme_name") = LOWER($1)
       `;
       const themeArgument = [request.params.name];
@@ -53,17 +54,17 @@ class Themes {
       const theme = themeResult.rows[0];
 
       response.status(200).json({
-        theme: theme
+        theme: theme,
       });
-    } catch (error){
-      console.log(error)
+    } catch (error) {
+      console.log(error);
     }
   };
   /**
    * Add a new theme
    * @route POST /themes/:id
    */
-  addOne = async (request, response, next) => {
+  addOneTheme = async (request, response, next) => {
     try {
       let newTheme = request.body.name;
 
@@ -81,14 +82,14 @@ class Themes {
       });
     } catch (error) {
       // TODO: Check if the error returned concerns a duplication
-      next(error)
+      next(error);
     }
   };
   /**
    * Update theme
    * @route PUT /themes/:id
    */
-  updateOne = async (request, response, next) => {
+  updateOneTheme = async (request, response, next) => {
     try {
       const { id } = request.params;
       const { name } = request.body;
@@ -104,22 +105,21 @@ class Themes {
         theme: themeResult.rows[0],
       });
     } catch (error) {
-      next(error)
+      next(error);
     }
   };
   /**
    * Delete theme
    * @route DELETE /themes/:id
    */
-  deleteOne = async (request, response) => {
-    
+  deleteOneTheme = async (request, response) => {
     const themeQuery =
       'DELETE FROM "themes" WHERE LOWER("theme_name") = LOWER($1)';
     const themeArgument = [request.params.name];
     const themeResult = await Postgres.query(themeQuery, themeArgument);
 
     if (themeResult.rowCount === 0) {
-      return next(new ErrorHander("The theme cannot be found", 404))
+      return next(new ErrorHander("The theme cannot be found", 404));
     }
 
     response.status(200).json({
@@ -127,6 +127,5 @@ class Themes {
     });
   };
 }
-
 
 module.exports = new Themes();

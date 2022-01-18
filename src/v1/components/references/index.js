@@ -1,3 +1,3 @@
-const route = require('./referencesRouter');
+const route = require("./referencesRouters");
 
-module.exports = route
+module.exports = route;
