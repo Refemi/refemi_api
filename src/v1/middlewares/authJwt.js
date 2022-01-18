@@ -12,13 +12,15 @@ const ErrorHandler = require("../classes/ErrorHandler");
 const verifyToken = (request, _, next) => {
   try {
     const token = request.headers["x-access-token"];
-
     jwt.verify(token, JWT_SECRET, (error, decoded) => {
       if (error) {
-        throw new ErrorHandler('Invalid Token!', 401);
-      }
 
-      // TODO: Check if token is expired
+        if (error.expiredAt) {
+          throw new ErrorHandler('Token expired', 498);
+        } else {
+          throw new ErrorHandler('Invalid Token!', 401);
+        }
+      }
       request.userId = decoded.id;
       request.roleId = decoded.role;
       next();
