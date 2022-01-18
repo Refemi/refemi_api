@@ -55,7 +55,27 @@ class Auth {
    * @param {string} request.body.mail - user mail
    * @param {string} request.body.password - user password hashed
    */
-   async getOne (request, response, next) {
+  async getOne (_, response, next) {
+    try {
+      response.status(200).json({
+        
+      });
+    } catch (error) {
+      if (
+        error instanceof ErrorUserNotFound || 
+        error instanceof ErrorUserCredential ||
+        error instanceof ErrorUserExist
+      ) { next(error) } else {
+        next(new ErrorHandler(error.message, error.status));
+      }
+    }
+  }
+  /**
+   * Add one user
+   * @param {string} request.body.mail - user mail
+   * @param {string} request.body.password - user password hashed
+   */
+  async logIn (request, response, next) {
     try {
       const { mail, password } = request.body;
       const userRequest = `
