@@ -2,11 +2,19 @@ const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
 // Errors Handler
-const { ErrorHandler } = require('./counterErrors');
+const { ErrorHandler, ErrorReferencesNotFound } = require('./counterErrors');
 
-//get Home page Counters by number of total references, number of contributions and monthly references number
+
+//
+/**
+ * @description Counters Class
+ */
 class Counters {
-  getHomeCounters = async (_, res, next) => {
+  /**
+   * @description Get Home page Counters by number of total references, number of contributions and monthly references number
+   * @route GET /api/v1/counters/home
+   */
+  async getHomeCounters (_, response, next) {
     try {
       // Counter for all validated references
       const totalReferenceByContributors = await Postgres.query(`
@@ -30,7 +38,7 @@ class Counters {
         [month]
       );
   
-      res.status(200).json({
+      response.status(200).json({
         totalReferences: totalReferenceByContributors.rows[0].references_count,
         totalContributors: totalReferenceByContributors.rows[0].contributors_count,
         monthReferences: monthRefs.rows[0].count,
@@ -39,62 +47,102 @@ class Counters {
       next(error);
     }
   };
-  //get Dashboard counters by user number contribution validate or waiting
-  async getDashboardUser (req, res, next) {
+  /**
+   * @description Get Dashboard counters by user number contribution validate or waiting
+   * @route GET /api/v1/counters/dashboard/user
+   */
+  //
+  async getDashboardUserCounters (request, response, next) {
     try {
+      const { userId } = request;
+
       // Number of validated contributions by user (contributor)
-      const totalContributions = await Postgres.query(
-        'SELECT COUNT(*) FROM "users" INNER JOIN "references" ON "users".id = "references".reference_contributor_id WHERE "users".id=$1  AND "references".reference_status=true;',
-        [data.id]
-      );
+      const totalApprovedContributionsRequest =`
+        SELECT COUNT(*) 
+        FROM "users"
+        INNER JOIN "references" ON "users".id = "references".reference_contributor_id
+        WHERE "users".id=$1 AND "references".reference_status=true;
+      `;
+      const totalApprovedContributionsResult = await Postgres.query(totalApprovedContributionsRequest, [userId]);
+
+      if (!totalApprovedContributionsResult) {
+        throw new ErrorReferencesNotFound()
+      }
   
       // Number of pending contributions by user (contributor)
-      const pendingContributions = await Postgres.query(
-        'SELECT COUNT(*) FROM "references" INNER JOIN "users" ON "users".id = "references".reference_contributor_id WHERE "users".id=$1 AND "references".reference_status=false;',
-        [data.id]
-      );
-  
-      res.status(200).json({
-        approvedContributions: parseInt(totalContributions.rows[0].count),
-        pendingContributions: parseInt(pendingContributions.rows[0].count),
+      const totalPendingContributionsRequest =`
+        SELECT COUNT(*)
+        FROM "references"
+        INNER JOIN "users" ON "users".id = "references".reference_contributor_id
+        WHERE "users".id=$1 AND "references".reference_status=false;
+      `;
+      const totalPendingContributionsResult = await Postgres.query(totalPendingContributionsRequest, [request.userId]);
+
+      if (!totalPendingContributionsResult) {
+        throw new ErrorReferencesNotFound()
+      }
+
+      response.status(200).json({
+        counters: {
+          totalApprovedContributions: parseInt(totalApprovedContributionsResult.rows[0].count),
+          totalPendingContributions: parseInt(totalPendingContributionsResult.rows[0].count)
+        }
       });
     } catch (error) {
       next(error);
     }
   };
-  // get Admin Dashboard Counters
-  async getDashboardAdmin (req, res, next) {
-    const pendingContributions = await Postgres.query(`
-          SELECT COUNT(*)
-          FROM "references"
-          WHERE "references".reference_status = false
-          ;`);
-  
-    // Total approved contributions
-    const approvedContributions = await Postgres.query(`
+  /**
+   * @description Get Admin Dashboard Counters
+   * @route GET /api/v1/counters/dashboard/admin
+   */
+  //
+  async getDashboardAdminCounters (_, response, next) {
+    try {    
+      // Total approved contributions
+      const totalApprovedContributionsRequest = `
         SELECT COUNT(*)
         FROM "references"
         INNER JOIN "users" ON "users".id = "references".reference_moderator_id
         WHERE "references".reference_status = true;
-      ;`);
-  
-    // Total contributors
-    const totalContributors = await Postgres.query(`
+      `;
+      const totalApprovedContributionsResult = await Postgres.query(totalPendingContributionsRequest);
+    
+      // Total pending contributions
+      const totalPendingContributionsRequest = `
+        SELECT COUNT(*)
+        FROM "references"
+        WHERE "references".reference_status = false;
+      `;
+      const pendingContributions = await Postgres.query(totalPendingContributionsRequest);
+    
+      // Total contributors
+      const totalContributorsRequest = `
         SELECT COUNT(DISTINCT "reference_contributor_id")
         FROM "references"
         WHERE "reference_status" = true
-      ;`);
-    // Total administrators
-    const totalAdmins = await Postgres.query(
-      'SELECT COUNT(*) FROM "users" WHERE "user_role"=3'
-    );
-  
-    res.status(200).json({
-      totalContributors: parseInt(totalContributors.rows[0].count),
-      totalAdmins: parseInt(totalAdmins.rows[0].count),
-      totalPendingContributions: parseInt(pendingContributions.rows[0].count),
-      totalApprovedContributions: parseInt(approvedContributions.rows[0].count),
-    });
+      ;`;
+      const totalContributors = await Postgres.query(totalContributorsRequest);
+
+      // Total administrators
+      const totalAdministratorsRequest = `
+        SELECT COUNT(*)
+        FROM "users"
+        WHERE "user_role"=3
+      `;
+      const totalAdministratorsResult = await Postgres.query(totalAdministratorsRequest);
+    
+      response.status(200).json({
+        counters: {
+          totalApprovedContributions: parseInt(approvedContributions.rows[0].count),
+          totalPendingContributions: parseInt(pendingContributions.rows[0].count),
+          totalContributors: parseInt(totalContributors.rows[0].count),
+          totalAdministrators: parseInt(totalAdministratorsResult.rows[0].count),
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
   };
 }
 
