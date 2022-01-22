@@ -188,6 +188,48 @@ class References {
     }
   }
   /**
+ * Get references by theme id
+ * @route GET /api/v1/references/user/
+ */
+  async getAllReferencesByUser(request, response, next) {
+    try {
+      const { userId } = request;
+
+      const referencesRequest = `
+        SELECT
+          "references".id as id, "references".reference_name as name,
+          categories.category_name as category,
+          categories.id as category_id,
+          array_agg(t.theme_label) as themes
+        FROM "references"
+        JOIN categories ON "references".reference_category_id = categories.id
+        LEFT JOIN sections ON categories.section_id = sections.id
+        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
+        LEFT JOIN themes t ON t.id = rt.reference_theme_id
+        WHERE "references".reference_contributor_id = $1
+        GROUP BY "references".id, category_name, category_id
+      `;
+
+      const referencesResult = await Postgres.query(referencesRequest, [userId]);
+      if (!referencesResult) {
+        throw new ErrorReferenceNotFound();
+      }
+
+      const references = referencesResult.rows.reduce((references, reference) => {
+        if (reference.status) {
+          references.validated.push(reference)
+        } else {
+          references.pending.push(reference)
+        }
+        return references;
+      }, { validated: [], pending: [] });
+
+      response.status(200).json({ references });
+    } catch (error) {
+      next(error);
+    }
+  }
+  /**
    * Get reference by id
    * @route GET /api/v1/references/:id
    */
