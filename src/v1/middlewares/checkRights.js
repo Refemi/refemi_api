@@ -29,7 +29,6 @@ const checkRights = async (req, res, next) => {
 };
 
 const isAdmin = (request, response, next) => {
-  // TODO: Check with postGre if the user is admin.
   if (request.roleId === roles.ADMIN) {
     return next()
   }

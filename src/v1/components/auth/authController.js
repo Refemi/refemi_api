@@ -101,7 +101,7 @@ class Auth {
           email: user.email,
           role: user.role,
         },
-        accessToken: user.newToken(),
+        accessToken: user.getNewToken(),
       });
     } catch (error) {
       if (
