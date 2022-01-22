@@ -26,8 +26,7 @@ const verifyToken = (request, _, next) => {
       next();
     });
   } catch (error) {
-    // TODO: Error handling to return the correct message
-    next(new ErrorHandler('Invalid Token!', 401));
+    next(error);
   }
 }
 
