@@ -20,5 +20,6 @@ router.use('/references', require('./references'));
 router.use('/auth', require('./auth'));
 router.use('/counters', require('./counters'));
 router.use('/users', require('./users'));
+router.use('/search', require('./search'));
 
 module.exports = router;

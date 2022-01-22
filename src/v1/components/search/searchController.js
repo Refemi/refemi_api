@@ -2,30 +2,42 @@ const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
 // Errors Route
-const ErrorHander = require("../../utils/errorhander");
-const catchAsyncErrors = require("../../middlewares/catchAsyncErrors");
+const { ErrorSearchNoResult } = require("./searchErrors");
 
+class Search {
+  /**
+   * Create a new reference
+   * @param {Object} request.query.answer - Search
+   * @route POST /api/v1/search
+   */
+  async getAllSearch (request, response, next) {
+    try {
+      const search = request.query.answer;
 
-//get Search info
-const getAllSearch = catchAsyncErrors(async (req, res) => {
-  const search = req.query.answer;
+      const searchRequest = `
+        SELECT "id", "reference_name", "reference_content", "reference_country_name", "reference_category_id"
+        FROM "references"
+        WHERE to_tsvector (
+          "reference_name" || ' ' ||"reference_country_name" || ' ' ||"reference_content" || ' ' || "reference_country_name" || ' ' ||"reference_category_id")
+          @@ to_tsquery ($1);
+      `;
 
-    const result = await Postgres.query(
-      `select "id", "reference_name","reference_content","reference_country_name", "reference_category_id" from "references" where to_tsvector ( "reference_name" || ' ' ||"reference_country_name" || ' ' ||"reference_content" || ' ' || "reference_country_name" || ' ' ||"reference_category_id") @@ to_tsquery ($1)`,
-      [search]
-    );
+      const searchResult = await Postgres.query(searchRequest, [search]);
 
-    if (result.rowCount === 0) {
-      return next(new ErrorHander("this search result does not exist in the database", 404))
+      if (searchResult.rowCount === 0) {
+        return next(new ErrorSearchNoResult())
+      }
+
+      response.status(200).json({
+        search : searchResult.rows
+      });
+    } catch (error) {
+      next(error);
     }
-    res.status(200).json({
-      search : result.rows});
-    
-});
+  }    
+}
 
-module.exports = { getAllSearch };
-
-
+module.exports = new Search();
 
 
 
