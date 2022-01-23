@@ -1,21 +1,32 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
+const {
+  ErrorHandler,
+  ErrorUserPassword,
+} = require("./authErrors");
+
 /**
  * @description User Auth Class
- * @param {string} User.id
- * @param {string} User.name
- * @param {string} User.mail
- * @param {string} User.password
- * @param {string} User.role
+ * @param {string} userId
+ * @param {string} userName
+ * @param {string} userEmail
+ * @param {string} userPassword
+ * @param {string} userRole
  */
 class User {
-  constructor(User) {
-    this.id = User.id;
-    this.name = User.user_name;
-    this.email = User.user_mail;
-    this.password = User.user_password;
-    this.role = User.user_role;
+  constructor(
+    userName = undefined,
+    userEmail = undefined,
+    userId = undefined,
+    userRole = "user",
+    userPassword = undefined,
+  ) {
+    this.userName = userName;
+    this.userEmail = userEmail;
+    this.userId = userId;
+    this.userRole = userRole;
+    this.userPassword = userPassword;
   }
   /**
    * Checks the user credentials
@@ -23,13 +34,7 @@ class User {
    * @returns {boolean}
    */
   async checkCredentials(password) {
-    const isPasswordValid = await bcrypt.compare(password, this.password);
-
-    if (!isPasswordValid) {
-      return false;
-    }
-
-    return true;
+    return await bcrypt.compare(password, this.userPassword);
   }
   /**
    * Generates a new token
@@ -46,6 +51,28 @@ class User {
         expiresIn: 86400,
       }
     );
+  }
+  /**
+   * Returns the user object
+   * @return {string} credentials.userName
+   * @return {string} credentials.userEmail
+   * @return {string} credentials.userRole
+   */
+  getCredentials() {
+    return {
+      userName: this.userName,
+      userEmail: this.userEmail,
+      userRole: this.userRole,
+    };
+  }
+  /**
+   * Generate a new hashed password
+   * @param {string} password 
+   * @returns {string} hashed password
+   */
+  async hashPassword(password) {
+    const salt = await bcrypt.genSalt(12);
+    return await bcrypt.hash(password, salt);
   }
 }
 

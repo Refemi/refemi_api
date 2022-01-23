@@ -2,11 +2,14 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
+// Import User Class
 const { User } = require("./auth");
 
+// Handle errors
 const {
   ErrorHandler,
   ErrorUserNotFound,
+  ErrorUserPassword,
   ErrorUserCredential,
   ErrorUserExist,
 } = require("./authErrors");
@@ -21,34 +24,49 @@ class Auth {
    * @param {string} request.body.mail - user mail
    * @param {string} request.body.password - user password hashed
    */
-  async addOneUser(request, response) {
+  async addOneUser(request, response, next) {
     try {
-      const { name, mail, password } = request.body;
+      const { userName, userEmail, userPassword } = request.body;
+
       // Regex : needs at least a number and 6 characters
-      const passwordValid = /(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,50})$/;
-      const passwordTest = passwordValid.test(password);
-
+      const passwordValid = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/;
+      const passwordTest = passwordValid.test(userPassword);
+      if (!passwordTest) {
+        throw new ErrorUserPassword();
+      }
       // Verify if user already exists before creating it
-      const userQuery = `SELECT * FROM "users" WHERE "user_mail" = $1`;
-      const userArgument = [mail];
-      const user = await Postgres.query(userQuery, userArgument);
+      const userQuery = `
+        SELECT *
+        FROM "users"
+        WHERE "user_email" = $1
+      `;
+      const userArgument = [userEmail];
+      const userResult = await Postgres.query(userQuery, userArgument);
+      console.log(userResult.rows)
+      if (userResult.rows.length === 0) {
+        const UserAuth = new User(userName, userEmail)
+        console.log(UserAuth)
+        const hashedPassword = await UserAuth.hashPassword(userPassword);
+        const addUserQuery = `
+          INSERT INTO "users" ("user_name", "user_email", "user_password")
+          VALUES ($1, $2, $3);
+        `;
+        const addUserArguments = [UserAuth.userName, UserAuth.userEmail, hashedPassword];
+        console.log(addUserArguments)
+        const addUserResult = await Postgres.query(addUserQuery, addUserArguments);
 
-      if (user.rows.length === 0 && passwordTest) {
-        const salt = await bcrypt.genSalt(12);
-        const bcryptPassword = await bcrypt.hash(password, salt);
-
-        const addUserQuery =
-          'INSERT INTO "users" ("user_name", "user_mail", "user_password") VALUES ($1, $2, $3)';
-        const addUserArguments = [name, mail, bcryptPassword];
-
-        await Postgres.query(addUserQuery, addUserArguments);
 
         response.status(201).json({
           message: `New user has been created`,
         });
       }
     } catch (error) {
-      next(ErrorUserExist());
+      console.log(error)
+      if (error instanceof ErrorUserPassword) {
+        next(new ErrorUserPassword());
+      } else {
+        next(new ErrorHandler('', 403));
+      }
     }
   }
   /**
@@ -73,45 +91,43 @@ class Auth {
   }
   /**
    * Authentification
-   * @param {string} request.body.mail - user mail
+   * @param {string} request.body.email - user mail
    * @param {string} request.body.password - user password hashed
    */
-  async logIn(request, response, next) {
+  async logIn (request, response, next) {
     try {
-      const { mail, password } = request.body;
+      console.log(request.body)
+      const { email, password } = request.body;
       const userRequest = `
-        SELECT * FROM "users" WHERE user_mail= $1
+        SELECT *
+        FROM "users"
+        WHERE user_email = $1
       `;
-      const userResult = await Postgres.query(userRequest, [mail]);
-
+      
+      const userResult = await Postgres.query(userRequest, [email]);
       if (userResult.rows.length === 0) {
-        throw new ErrorUserNotFound();
+        throw new Error();
       }
+      
+      const { id, user_name, user_email, user_role, user_password } = userResult.rows[0];
+      const UserAuth = new User(user_name, user_email, id, user_role, user_password);
 
-      const user = new User(userResult.rows[0]);
-
-      if (!user.checkCredentials(password)) {
+      const isPasswordValid = await UserAuth.checkCredentials(password)
+      if (!isPasswordValid) {
         throw new ErrorUserCredential();
-      }
-
-      response.status(200).json({
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-        accessToken: user.getNewToken(),
-      });
-    } catch (error) {
-      if (
-        error instanceof ErrorUserNotFound ||
-        error instanceof ErrorUserCredential ||
-        error instanceof ErrorUserExist
-      ) {
-        next(error);
       } else {
-        next(new ErrorHandler(error.message, error.status));
+        console.log(UserAuth.getCredentials())
+        response.status(200).json({
+          user: UserAuth.getCredentials(),
+          accessToken: UserAuth.getNewToken(),
+        });
+      }
+    } catch (error) {
+      if (error instanceof ErrorUserPassword) {
+        next(error)
+      } else {
+        console.log(error)
+        next(new ErrorHandler('Impossible de se connecter', 403));
       }
     }
   }
