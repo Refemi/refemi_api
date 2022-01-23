@@ -14,14 +14,20 @@ class Users {
   async getAllUsers(request, response, next) {
     try {
       const userQuery = `
-          SELECT * FROM users WHERE id = $1
+        SELECT *
+        FROM users
+        WHERE id = $1
       `;
       const userArgument = [request.params.id];
       const userResult = await Postgres.query(userQuery, userArgument);
       const user = userResult.rows[0];
 
       response.status(200).json({
-        user: user,
+        user: {
+          userName: user.user_name,
+          userEmail: user.user_email,
+          userRole: user.user_role
+        }
       });
     } catch (error) {
       next(error);
@@ -30,7 +36,9 @@ class Users {
   async getOwn(request, response, next) {
     try {
       const userQuery = `
-        SELECT * FROM users WHERE id = $1
+        SELECT *
+        FROM users
+        WHERE id = $1
       `;
       const userArgument = [request.userId];
       const userResult = await Postgres.query(userQuery, userArgument);
@@ -38,9 +46,9 @@ class Users {
 
       response.status(200).json({
         user: {
-          user_name: user.user_name,
-          user_mail: user.user_mail,
-          user_role: user.user_role,
+          userName: user.user_name,
+          userEmail: user.user_email,
+          userRole: user.user_role,
         },
       });
     } catch (error) {
