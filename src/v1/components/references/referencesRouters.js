@@ -11,7 +11,7 @@ router.get("/theme/:id", ReferencesController.getAllReferencesByTheme);
 router.get("/user", verifyToken, ReferencesController.getAllReferencesByUser);
 router.get("/:id", ReferencesController.getOneReference);
 router.get("/", verifyToken, isAdmin, ReferencesController.getAllReferences);
-router.post("/", verifyToken, ReferencesController.addOneReference);
+router.post("/",verifyToken, ReferencesController.addOneReference);
 router.put("/:id", verifyToken, ReferencesController.updateOneReference);
 router.delete("/:id", verifyToken, isAdmin, ReferencesController.deleteOneReference);
 
