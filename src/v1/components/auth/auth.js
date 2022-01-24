@@ -8,9 +8,9 @@ const {
 
 /**
  * @description User Auth Class
- * @param {string} userId
  * @param {string} userName
  * @param {string} userEmail
+ * @param {string} userId
  * @param {string} userPassword
  * @param {string} userRole
  */
@@ -43,7 +43,7 @@ class User {
   getNewToken() {
     return jwt.sign(
       {
-        id: this.id,
+        id: this.userId,
         role: this.role,
       },
       process.env.JWT_SECRET,
