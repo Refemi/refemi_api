@@ -1,7 +1,7 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
-const { ErrorReferenceNotFound,ErrorReferencesThemesLimit } = require("./referencesErrors");
+const { ErrorReferenceNotFound, ErrorReferencesThemesLimit } = require("./referencesErrors");
 
 /**
  * @description CRUD References Class
@@ -14,7 +14,7 @@ class References {
    * @param {string} reference.reference_date - Name of the reference
    * @param {string} reference.reference_content - Name of the reference
    * @param {string} reference.reference_category_id - Name of the reference
-   * @param {Array} reference.reference_theme_id - id of the themes
+   * @param {array} reference.reference_theme_id - id of the themes
    * @route POST /api/v1/references
    */
   async addOneReference(request, response, next) {
@@ -39,29 +39,19 @@ class References {
         reference.reference_category_id,
       ];
 
-      
-      if(referenceThemesIds.length === 0 || referenceThemesIds.length > 5){
+      if (referenceThemesIds.length === 0 || referenceThemesIds.length > 5) {
         throw new ErrorReferencesThemesLimit();
       }
 
       const insertReference = await Postgres.query(referenceRequest, referenceArgument);
-     
 
-       for( var i in referenceThemesIds ){
+      for (let i in referenceThemesIds) {
+        await Postgres.query(`
+          INSERT INTO "reference_themes" (reference_theme_reference_id, reference_theme_id)
+          VALUES ($1, $2)
+        `, [insertReference.rows[0].reference_theme_reference_id, referenceThemesIds[i]]);
+      }
 
-            await Postgres.query(
-            ` INSERT INTO "reference_themes"
-              (reference_theme_reference_id,reference_theme_id)
-            VALUES ($1, $2)`,
-            [
-              insertReference.rows[0].reference_theme_reference_id,
-              referenceThemesIds[i]
-            ]
-            );
-          
-          }
-      
-     
       // TODO: Return the reference with the elements created in base
       response.status(202).json({
         reference: {
