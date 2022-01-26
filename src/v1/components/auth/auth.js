@@ -10,12 +10,12 @@ const bcrypt = require("bcrypt");
  * @param {string} User.role
  */
 class User {
-  constructor(User) {
-    this.id = User.id;
-    this.name = User.user_name;
-    this.email = User.user_mail;
-    this.password = User.user_password;
-    this.role = User.user_role;
+  constructor(name, email, password = "", id = -1, role = -1) {
+    this.id = id;
+    this.name = name;
+    this.email = email;
+    this.password = password;
+    this.role = role;
   }
   /**
    * Checks the user credentials
@@ -24,7 +24,7 @@ class User {
    */
   async checkCredentials(password) {
     const isPasswordValid = await bcrypt.compare(password, this.password);
-
+    console.log(isPasswordValid)
     if (!isPasswordValid) {
       return false;
     }
@@ -46,6 +46,10 @@ class User {
         expiresIn: 86400,
       }
     );
+  }
+  async encryptPassword(password) {
+    const salt = await bcrypt.genSalt(12);
+    return bcrypt.hash(password, salt);
   }
 }
 
