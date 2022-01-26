@@ -216,7 +216,8 @@ class References {
           "references".id as id, "references".reference_name as name,
           categories.category_name as category,
           categories.id as category_id,
-          array_agg(t.theme_label) as themes
+          array_agg(t.theme_label) as themes,
+          "references".reference_status as status
         FROM "references"
         JOIN categories ON "references".reference_category_id = categories.id
         LEFT JOIN sections ON categories.section_id = sections.id
