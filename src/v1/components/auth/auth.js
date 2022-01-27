@@ -15,18 +15,12 @@ const {
  * @param {string} userRole
  */
 class User {
-  constructor(
-    userName = undefined,
-    userEmail = undefined,
-    userId = undefined,
-    userRole = "user",
-    userPassword = undefined,
-  ) {
-    this.userName = userName;
-    this.userEmail = userEmail;
-    this.userId = userId;
-    this.userRole = userRole;
-    this.userPassword = userPassword;
+  constructor(name, email, password = "", id = -1, role = -1) {
+    this.id = id;
+    this.name = name;
+    this.email = email;
+    this.password = password;
+    this.role = role;
   }
   /**
    * Checks the user credentials
@@ -34,7 +28,12 @@ class User {
    * @returns {boolean}
    */
   async checkCredentials(password) {
-    return await bcrypt.compare(password, this.userPassword);
+    const isPasswordValid = await bcrypt.compare(password, this.password);
+    if (!isPasswordValid) {
+      return false;
+    }
+
+    return true;
   }
   /**
    * Generates a new token
@@ -43,7 +42,7 @@ class User {
   getNewToken() {
     return jwt.sign(
       {
-        id: this.userId,
+        id: this.id,
         role: this.role,
       },
       process.env.JWT_SECRET,
@@ -60,9 +59,9 @@ class User {
    */
   getCredentials() {
     return {
-      userName: this.userName,
-      userEmail: this.userEmail,
-      userRole: this.userRole,
+      name: this.name,
+      email: this.email,
+      role: this.role,
     };
   }
   /**
@@ -70,9 +69,9 @@ class User {
    * @param {string} password 
    * @returns {string} hashed password
    */
-  async hashPassword(password) {
+  async encryptPassword(password) {
     const salt = await bcrypt.genSalt(12);
-    return await bcrypt.hash(password, salt);
+    return bcrypt.hash(password, salt);
   }
 }
 
