@@ -31,15 +31,9 @@ class Auth {
       const passwordRegex = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/;
       const isValidPassword = passwordRegex.test(userPassword);
       if (!isValidPassword) {
-        throw new ErrorUserCredential();
+        throw new ErrorUserPassword();        
       }
 
-      // Regex : needs at least a number and 6 characters
-      const passwordValid = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/;
-      const passwordTest = passwordValid.test(userPassword);
-      if (!passwordTest) {
-        throw new ErrorUserPassword();
-      }
       // Verify if user already exists before creating it
       const userQuery = `SELECT * FROM "users" WHERE "user_email" = $1`;
       const userArgument = [userEmail];
@@ -65,26 +59,6 @@ class Auth {
       });
     } catch (error) {
       next(error);
-    }
-  }
-  /**
-   * Check if user is still authentificated to enable verifyToken() to work
-   * @param {string} request.body.mail - user mail
-   * @param {string} request.body.password - user password hashed
-   */
-  async checkAuth(_, response, next) {
-    try {
-      response.status(200).json({});
-    } catch (error) {
-      if (
-        error instanceof ErrorUserNotFound ||
-        error instanceof ErrorUserCredential ||
-        error instanceof ErrorUserExist
-      ) {
-        next(error);
-      } else {
-        next(new ErrorHandler(error.message, error.status));
-      }
     }
   }
   /**
