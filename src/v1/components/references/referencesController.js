@@ -194,7 +194,7 @@ class References {
   async getAllReferencesByUser(request, response, next) {
     try {
       const { userId } = request;
-      console.log(userId)
+
       const referencesRequest = `
         SELECT
           "references".id as id, "references".reference_name as name,
@@ -216,7 +216,6 @@ class References {
         throw new ErrorReferenceNotFound();
       }
       const references = referencesResult.rows.reduce((references, reference) => {
-        console.log(reference)
         if (reference.status) {
           references.validated.push(reference)
         } else {
@@ -227,7 +226,6 @@ class References {
 
       response.status(200).json({ references });
     } catch (error) {
-      console.log(error)
       next(error);
     }
   }
