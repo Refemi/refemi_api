@@ -148,7 +148,7 @@ class References {
 
       const referencesResult = await Postgres.query(referencesRequest, [id]);
 
-      if (!referencesResult) {
+      if (!referencesResult || referencesResult.rowCount === 0) {
         throw new ErrorReferenceNotFound();
       }
 
@@ -187,7 +187,7 @@ class References {
       `;
 
       const referencesResult = await Postgres.query(referencesRequest, [id]);
-      if (!referencesResult) {
+      if (!referencesResult || referencesResult.rowCount === 0) {
         throw new ErrorReferenceNotFound();
       }
       console.log(referencesResult.rows);
@@ -220,10 +220,10 @@ class References {
         GROUP BY "references".id, category_name, category_id
       `;
 
-      const referencesResult = await Postgres.query(referencesRequest, [
-        userId,
-      ]);
-      if (!referencesResult) {
+
+      const referencesResult = await Postgres.query(referencesRequest, [userId]);
+
+      if (!referencesResult || referencesResult.rowCount === 0) {
         throw new ErrorReferenceNotFound();
       }
       const references = referencesResult.rows.reduce(
@@ -269,7 +269,7 @@ class References {
       `;
       const referenceResult = await Postgres.query(referenceRequest, [id]);
 
-      if (!referenceResult) {
+      if (!referenceResult || referenceResult.rowCount === 0) {
         throw new ErrorReferenceNotFound("The theme cannot be found", 401);
       }
 
