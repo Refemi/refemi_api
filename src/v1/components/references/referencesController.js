@@ -132,7 +132,7 @@ class References {
         SELECT
           "references".id AS id, "references".reference_name AS name,
           categories.category_name AS category,
-          array_agg(themes.theme_label)  AS themes,
+          array_agg(themes.id) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date
         FROM "references"
@@ -166,7 +166,7 @@ class References {
         SELECT
           "references".id as id, "references".reference_name as name,
           categories.category_name as category,
-          array_agg(t.theme_label) as themes
+          array_agg(t.id) as themes
         FROM "references"
         JOIN categories ON "references".reference_category_id = categories.id
         LEFT JOIN sections ON categories.section_id = sections.id
@@ -200,7 +200,8 @@ class References {
           "references".id as id, "references".reference_name as name,
           categories.category_name as category,
           categories.id as category_id,
-          array_agg(t.theme_label) as themes
+          array_agg(t.id) as themes,
+          "references".reference_status as status
         FROM "references"
         JOIN categories ON "references".reference_category_id = categories.id
         LEFT JOIN sections ON categories.section_id = sections.id
@@ -214,7 +215,6 @@ class References {
       if (!referencesResult) {
         throw new ErrorReferenceNotFound();
       }
-
       const references = referencesResult.rows.reduce((references, reference) => {
         if (reference.status) {
           references.validated.push(reference)
@@ -240,7 +240,7 @@ class References {
         SELECT
           "references".id AS id, "references".reference_name AS name,
           categories.category_name AS category,
-          array_agg(themes.theme_label)  AS themes,
+          array_agg(themes.id) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date,
           "references".reference_author AS author,
