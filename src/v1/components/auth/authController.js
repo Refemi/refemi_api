@@ -79,6 +79,7 @@ class Auth {
    * @param {string} request.body.password - user password hashed
    */
   async logIn (request, response, next) {
+
     try {
       const { userEmail, userPassword } = request.body;
 
@@ -98,14 +99,14 @@ class Auth {
         userResult.rows[0].user_role
       );
 
-      if (!await UserDB.checkCredentials(userPassword)) {
+
+      if (!UserDB.checkCredentials(userPassword)) {
         throw new ErrorUserCredential();
       } else {
-        UserAuth.token = UserAuth.getNewToken();
-
+        UserDB.token = UserDB.getNewToken();
         response.status(200).json({
-          user: UserAuth.getCredentials(),
-          accessToken: UserAuth.token,
+          user: UserDB.getCredentials(),
+          accessToken: UserDB.token,
         });
       }
     } catch (error) {
