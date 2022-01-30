@@ -102,7 +102,7 @@ class References {
           "references".id AS id, "references".reference_name AS name,
           section_id AS "section",
           categories.id AS category, 
-          array_agg(themes.id) AS themes,
+          array_agg(themes.theme_label) AS themes,
           reference_status AS status,
           reference_contributor_id AS contributor,
           reference_country_name AS country,
@@ -150,7 +150,7 @@ class References {
         SELECT
           "references".id AS id, "references".reference_name AS name,
           categories.category_name AS category,
-          array_agg(themes.id) AS themes,
+          array_agg(themes.theme_label) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date
         FROM "references"
@@ -225,7 +225,7 @@ class References {
           "references".id as id, "references".reference_name as name,
           categories.category_name as category,
           categories.id as category_id,
-          array_agg(t.id) as themes,
+          array_agg(t.theme_label) as themes,
           "references".reference_status as status
         FROM "references"
         JOIN categories ON "references".reference_category_id = categories.id
@@ -271,7 +271,7 @@ class References {
         SELECT
           "references".id AS id, "references".reference_name AS name,
           categories.category_name AS category,
-          array_agg(themes.id) AS themes,
+          array_agg(themes.theme_label) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date,
           "references".reference_author AS author,
