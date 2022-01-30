@@ -12,6 +12,12 @@ class ErrorUserCredential extends ErrorHandler {
   }
 }
 
+class ErrorUserPassword extends ErrorHandler {
+  constructor() {
+    super("User credentials is incorrect", 401);
+  }
+}
+
 class ErrorUserExist extends ErrorHandler {
   constructor() {
     super("User already exists", 409);
@@ -22,5 +28,6 @@ module.exports = {
   ErrorHandler,
   ErrorUserNotFound,
   ErrorUserCredential,
+  ErrorUserPassword,
   ErrorUserExist,
 };

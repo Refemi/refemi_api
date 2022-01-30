@@ -2,11 +2,14 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
+// Import User Class
 const { User } = require("./auth");
 
+// Handle errors
 const {
   ErrorHandler,
   ErrorUserNotFound,
+  ErrorUserPassword,
   ErrorUserCredential,
   ErrorUserExist,
 } = require("./authErrors");
@@ -28,7 +31,7 @@ class Auth {
       const passwordRegex = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/;
       const isValidPassword = passwordRegex.test(userPassword);
       if (!isValidPassword) {
-        throw new ErrorUserCredential();
+        throw new ErrorUserPassword();        
       }
 
       // Verify if user already exists before creating it
@@ -67,23 +70,15 @@ class Auth {
     try {
       response.status(200).json({});
     } catch (error) {
-      if (
-        error instanceof ErrorUserNotFound ||
-        error instanceof ErrorUserCredential ||
-        error instanceof ErrorUserExist
-      ) {
-        next(error);
-      } else {
-        next(new ErrorHandler(error.message, error.status));
-      }
+      next(error);
     }
   }
   /**
    * Authentification
-   * @param {string} request.body.mail - user mail
+   * @param {string} request.body.email - user mail
    * @param {string} request.body.password - user password hashed
    */
-  async logIn(request, response, next) {
+  async logIn (request, response, next) {
     try {
       const { userEmail, userPassword } = request.body;
 
@@ -92,7 +87,7 @@ class Auth {
       `;
       const userResult = await Postgres.query(userRequest, [userEmail]);
       if (userResult.rows.length === 0) {
-        throw new ErrorUserNotFound();
+        throw new Error();
       }
 
       const UserDB = new User(
@@ -103,28 +98,21 @@ class Auth {
         userResult.rows[0].user_role
       );
 
-
       if (!await UserDB.checkCredentials(userPassword)) {
         throw new ErrorUserCredential();
-      }
-
-      response.status(200).json({
-        user: {
-          name: UserDB.name,
-          email: UserDB.email,
-          role: UserDB.role,
-        },
-        accessToken: UserDB.getNewToken(),
-      });
-    } catch (error) {
-      if (
-        error instanceof ErrorUserNotFound ||
-        error instanceof ErrorUserCredential ||
-        error instanceof ErrorUserExist
-      ) {
-        next(error);
       } else {
-        next(new ErrorHandler(error.message, error.status));
+        UserAuth.token = UserAuth.getNewToken();
+
+        response.status(200).json({
+          user: UserAuth.getCredentials(),
+          accessToken: UserAuth.token,
+        });
+      }
+    } catch (error) {
+      if (error instanceof ErrorUserPassword) {
+        next(error)
+      } else {
+        next(new ErrorHandler('Impossible de se connecter', 403));
       }
     }
   }

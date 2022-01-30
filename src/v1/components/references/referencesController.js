@@ -96,7 +96,6 @@ class References {
    * @route GET /api/v1/references
    */
   async getAllReferences(_, response, next) {
-
     try {
       const referencesRequest = `  
         SELECT
@@ -123,14 +122,17 @@ class References {
         throw new ErrorReferenceNotFound();
       }
 
-      const references = referencesResult.rows.reduce((references, reference) => {
-        if (reference.status) {
-          references.validated.push(reference)
-        } else {
-          references.pending.push(reference)
-        }
-        return references;
-      }, { validated: [], pending: [] });
+      const references = referencesResult.rows.reduce(
+        (references, reference) => {
+          if (reference.status) {
+            references.validated.push(reference);
+          } else {
+            references.pending.push(reference);
+          }
+          return references;
+        },
+        { validated: [], pending: [] }
+      );
 
       response.status(200).json({ references });
     } catch (error) {
@@ -148,7 +150,7 @@ class References {
         SELECT
           "references".id AS id, "references".reference_name AS name,
           categories.category_name AS category,
-          array_agg(themes.theme_label)  AS themes,
+          array_agg(themes.id) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date
         FROM "references"
@@ -162,7 +164,7 @@ class References {
 
       const referencesResult = await Postgres.query(referencesRequest, [id]);
 
-      if (!referencesResult) {
+      if (!referencesResult || referencesResult.rowCount === 0) {
         throw new ErrorReferenceNotFound();
       }
 
@@ -179,34 +181,41 @@ class References {
     try {
       const { id } = request.params;
       const referencesRequest = `
-        SELECT
-          "references".id as id, "references".reference_name as name,
-          categories.category_name as category,
-          array_agg(t.theme_label) as themes
-        FROM "references"
-        JOIN categories ON "references".reference_category_id = categories.id
-        LEFT JOIN sections ON categories.section_id = sections.id
-        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-        LEFT JOIN themes t ON t.id = rt.reference_theme_id
-        WHERE t.id = $1
-        GROUP BY "references".id, categories.category_name
+      SELECT "references".id AS id, "references".reference_name AS name,
+      categories.category_name AS category,
+      (SELECT array_agg(t.theme_label) as themes
+		FROM "references" AS sousReference
+	    JOIN categories sousCategories ON sousReference.reference_category_id = sousCategories.id
+	    LEFT JOIN sections sourSection ON sousCategories.section_id = sourSection.id
+	    LEFT JOIN reference_themes sRt  ON "references".id = sRt.reference_theme_reference_id
+	    LEFT JOIN themes t ON t.id = sRt.reference_theme_id
+		WHERE sousReference.id = "references".id),
+      "references".reference_country_name AS country,
+      "references".reference_date AS date
+      FROM "references"
+      JOIN categories ON "references".reference_category_id = categories.id
+      LEFT JOIN sections ON categories.section_id = sections.id
+      LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
+      LEFT JOIN themes ON themes.id = rt.reference_theme_id
+      WHERE themes.id = $1
+      GROUP BY "references".id, categories.category_name
+
       `;
 
       const referencesResult = await Postgres.query(referencesRequest, [id]);
-
-      if (!referencesResult) {
+      if (!referencesResult || referencesResult.rowCount === 0) {
         throw new ErrorReferenceNotFound();
       }
-
+      console.log(referencesResult.rows);
       response.status(200).json({ references: referencesResult.rows });
     } catch (error) {
       next(error);
     }
   }
   /**
- * Get references by theme id
- * @route GET /api/v1/references/user/
- */
+   * Get references by theme id
+   * @route GET /api/v1/references/user/
+   */
   async getAllReferencesByUser(request, response, next) {
     try {
       const { userId } = request;
@@ -216,7 +225,7 @@ class References {
           "references".id as id, "references".reference_name as name,
           categories.category_name as category,
           categories.id as category_id,
-          array_agg(t.theme_label) as themes,
+          array_agg(t.id) as themes,
           "references".reference_status as status
         FROM "references"
         JOIN categories ON "references".reference_category_id = categories.id
@@ -227,19 +236,24 @@ class References {
         GROUP BY "references".id, category_name, category_id
       `;
 
-      const referencesResult = await Postgres.query(referencesRequest, [userId]);
+      const referencesResult = await Postgres.query(referencesRequest, [
+        userId,
+      ]);
+
       if (!referencesResult) {
         throw new ErrorReferenceNotFound();
       }
-
-      const references = referencesResult.rows.reduce((references, reference) => {
-        if (reference.status) {
-          references.validated.push(reference)
-        } else {
-          references.pending.push(reference)
-        }
-        return references;
-      }, { validated: [], pending: [] });
+      const references = referencesResult.rows.reduce(
+        (references, reference) => {
+          if (reference.status) {
+            references.validated.push(reference);
+          } else {
+            references.pending.push(reference);
+          }
+          return references;
+        },
+        { validated: [], pending: [] }
+      );
 
       response.status(200).json({ references });
     } catch (error) {
@@ -257,7 +271,7 @@ class References {
         SELECT
           "references".id AS id, "references".reference_name AS name,
           categories.category_name AS category,
-          array_agg(themes.theme_label)  AS themes,
+          array_agg(themes.id) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date,
           "references".reference_author AS author,
@@ -272,7 +286,7 @@ class References {
       `;
       const referenceResult = await Postgres.query(referenceRequest, [id]);
 
-      if (!referenceResult) {
+      if (!referenceResult || referenceResult.rowCount === 0) {
         throw new ErrorReferenceNotFound("The theme cannot be found", 401);
       }
 
