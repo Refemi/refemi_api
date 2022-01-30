@@ -62,11 +62,24 @@ class Auth {
     }
   }
   /**
+   * Check if user is still authentificated to enable verifyToken() to work
+   * @param {string} request.body.mail - user mail
+   * @param {string} request.body.password - user password hashed
+   */
+  async checkAuth(_, response, next) {
+    try {
+      response.status(200).json({});
+    } catch (error) {
+      next(error);
+    }
+  }
+  /**
    * Authentification
    * @param {string} request.body.email - user mail
    * @param {string} request.body.password - user password hashed
    */
   async logIn (request, response, next) {
+
     try {
       const { userEmail, userPassword } = request.body;
 
@@ -77,18 +90,23 @@ class Auth {
       if (userResult.rows.length === 0) {
         throw new Error();
       }
-      
-      const { id, user_name, user_email, user_role, user_password } = userResult.rows[0];
-      const UserAuth = new User(user_name, user_email, user_password, id, user_role);
-      
-      if (!UserAuth.checkCredentials(userPassword)) {
+
+      const UserDB = new User(
+        userResult.rows[0].user_name,
+        userResult.rows[0].user_email,
+        userResult.rows[0].user_password,
+        userResult.rows[0].id,
+        userResult.rows[0].user_role
+      );
+
+
+      if (!UserDB.checkCredentials(userPassword)) {
         throw new ErrorUserCredential();
       } else {
-        UserAuth.token = UserAuth.getNewToken();
-
+        UserDB.token = UserDB.getNewToken();
         response.status(200).json({
-          user: UserAuth.getCredentials(),
-          accessToken: UserAuth.token,
+          user: UserDB.getCredentials(),
+          accessToken: UserDB.token,
         });
       }
     } catch (error) {

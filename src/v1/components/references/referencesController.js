@@ -1,7 +1,7 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
-const { ErrorReferenceNotFound } = require("./referencesErrors");
+const { ErrorReferenceNotFound, ErrorReferencesThemesLimit } = require("./referencesErrors");
 
 /**
  * @description CRUD References Class
@@ -14,18 +14,23 @@ class References {
    * @param {string} reference.reference_date - Name of the reference
    * @param {string} reference.reference_content - Name of the reference
    * @param {string} reference.reference_category_id - Name of the reference
+   * @param {array} reference.reference_theme_id - id of the themes
    * @route POST /api/v1/references
    */
   async addOneReference(request, response, next) {
     try {
-      const { reference } = request.body;
-
+      const  reference  = request.body;
+      const referenceThemesIds = reference.reference_theme_id
+     
+      
       const referenceRequest = `
         INSERT
         INTO "references"
-          (reference_name, reference_country_name, reference_date, reference_content, reference_category_id)
-        VALUES ($1, $2, $3, $4,  $6)
+          (reference_name, reference_country_name, reference_date, reference_content,reference_category_id)
+        VALUES ($1, $2, $3, $4,$5,)
+        RETURNING reference_name, reference_country_name, reference_date, reference_content, reference_category_id,id as reference_theme_reference_id
       `;
+
       const referenceArgument = [
         reference.reference_name,
         reference.reference_country_name,
@@ -34,7 +39,18 @@ class References {
         reference.reference_category_id,
       ];
 
-      await Postgres.query(referenceRequest, referenceArgument);
+      if (referenceThemesIds.length === 0 || referenceThemesIds.length > 5) {
+        throw new ErrorReferencesThemesLimit();
+      }
+
+      const insertReference = await Postgres.query(referenceRequest, referenceArgument);
+
+      for (let i in referenceThemesIds) {
+        await Postgres.query(`
+          INSERT INTO "reference_themes" (reference_theme_reference_id, reference_theme_id)
+          VALUES ($1, $2)
+        `, [insertReference.rows[0].reference_theme_reference_id, referenceThemesIds[i]]);
+      }
 
       // TODO: Return the reference with the elements created in base
       response.status(202).json({

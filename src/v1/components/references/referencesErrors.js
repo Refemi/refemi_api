@@ -11,8 +11,15 @@ class ErrorReferencesNotFound extends ErrorHandler {
   }
 }
 
+class ErrorReferencesThemesLimit extends ErrorHandler {
+  constructor() {
+    super("themes can be added a minimum of 1 to a maximum of 5!", 401);
+  }
+}
+
 
 module.exports = {
   ErrorReferenceNotFound,
-  ErrorReferencesNotFound
+  ErrorReferencesNotFound,
+  ErrorReferencesThemesLimit
 }
