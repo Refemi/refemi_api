@@ -13,6 +13,11 @@ router.get("/:id", ReferencesController.getOneReference);
 router.get("/", verifyToken, isAdmin, ReferencesController.getAllReferences);
 router.post("/", verifyToken, ReferencesController.addOneReference);
 router.put("/:id", verifyToken, ReferencesController.updateOneReference);
-router.delete("/:id", verifyToken, isAdmin, ReferencesController.deleteOneReference);
+router.delete(
+  "/:id",
+  verifyToken,
+  isAdmin,
+  ReferencesController.deleteOneReference
+);
 
 module.exports = router;

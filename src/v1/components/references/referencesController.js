@@ -220,10 +220,11 @@ class References {
         GROUP BY "references".id, category_name, category_id
       `;
 
+      const referencesResult = await Postgres.query(referencesRequest, [
+        userId,
+      ]);
 
-      const referencesResult = await Postgres.query(referencesRequest, [userId]);
-
-      if (!referencesResult || referencesResult.rowCount === 0) {
+      if (!referencesResult) {
         throw new ErrorReferenceNotFound();
       }
       const references = referencesResult.rows.reduce(
