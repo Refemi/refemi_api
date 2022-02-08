@@ -7,7 +7,7 @@ class ErrorReferenceNotFound extends ErrorHandler {
 }
 class ErrorReferencesNotFound extends ErrorHandler {
   constructor() {
-    super('No references were found', 404);
+    super('No references were found', 204);
   }
 }
 
@@ -17,9 +17,16 @@ class ErrorReferencesThemesLimit extends ErrorHandler {
   }
 }
 
+class ErrorReferenceExist extends ErrorHandler {
+  constructor() {
+    super('La référence existe déjà', 409);
+  }
+}
+
 
 module.exports = {
   ErrorReferenceNotFound,
   ErrorReferencesNotFound,
-  ErrorReferencesThemesLimit
+  ErrorReferencesThemesLimit,
+  ErrorReferenceExist
 }
