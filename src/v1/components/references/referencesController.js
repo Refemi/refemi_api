@@ -110,8 +110,8 @@ class References {
       const referencesRequest = `  
         SELECT
           "references".id AS id, "references".reference_name AS name,
-          section_id AS "section",
-          categories.id AS category, 
+          section_id AS "section_id",
+          categories.id AS category_id, 
           array_agg(themes.theme_label) AS themes,
           reference_status AS status,
           reference_contributor_id AS contributor,
@@ -191,39 +191,38 @@ class References {
     try {
       const { id } = request.params;
       const referencesRequest = `
-      SELECT "references".id AS id, "references".reference_name AS name,
-      categories.category_name AS category,
-      (SELECT array_agg(t.theme_label) as themes
-		FROM "references" AS sousReference
-	    JOIN categories sousCategories ON sousReference.reference_category_id = sousCategories.id
-	    LEFT JOIN sections sourSection ON sousCategories.section_id = sourSection.id
-	    LEFT JOIN reference_themes sRt  ON "references".id = sRt.reference_theme_reference_id
-	    LEFT JOIN themes t ON t.id = sRt.reference_theme_id
-		WHERE sousReference.id = "references".id),
-      "references".reference_country_name AS country,
-      "references".reference_date AS date
-      FROM "references"
-      JOIN categories ON "references".reference_category_id = categories.id
-      LEFT JOIN sections ON categories.section_id = sections.id
-      LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-      LEFT JOIN themes ON themes.id = rt.reference_theme_id
-      WHERE themes.id = $1
-      GROUP BY "references".id, categories.category_name
-
+        SELECT "references".id AS id, "references".reference_name AS name,
+          categories.category_name AS category,
+          (SELECT array_agg(t.theme_label) as themes
+        FROM "references" AS sousReference
+          JOIN categories sousCategories ON sousReference.reference_category_id = sousCategories.id
+          LEFT JOIN sections sourSection ON sousCategories.section_id = sourSection.id
+          LEFT JOIN reference_themes sRt  ON "references".id = sRt.reference_theme_reference_id
+          LEFT JOIN themes t ON t.id = sRt.reference_theme_id
+        WHERE sousReference.id = "references".id),
+          "references".reference_country_name AS country,
+          "references".reference_date AS date
+          FROM "references"
+          JOIN categories ON "references".reference_category_id = categories.id
+          LEFT JOIN sections ON categories.section_id = sections.id
+          LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
+          LEFT JOIN themes ON themes.id = rt.reference_theme_id
+          WHERE themes.id = $1
+          GROUP BY "references".id, categories.category_name
       `;
 
       const referencesResult = await Postgres.query(referencesRequest, [id]);
       if (!referencesResult || referencesResult.rowCount === 0) {
         throw new ErrorReferenceNotFound();
       }
-      console.log(referencesResult.rows);
+      
       response.status(200).json({ references: referencesResult.rows });
     } catch (error) {
       next(error);
     }
   }
   /**
-   * Get references by theme id
+   * Get references by user id
    * @route GET /api/v1/references/user/
    */
   async getAllReferencesByUser(request, response, next) {
@@ -233,7 +232,7 @@ class References {
       const referencesRequest = `
         SELECT
           "references".id as id, "references".reference_name as name,
-          categories.category_name as category,
+          section_id AS "section_id",
           categories.id as category_id,
           array_agg(t.theme_label) as themes,
           "references".reference_status as status
