@@ -1,11 +1,7 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
-const { 
-  ErrorReferenceNotFound,
-  /* TODO: To be used once the theme has been added on the front sideErrorReferencesThemesLimit,
-  */ ErrorReferenceExist
-} = require("./referencesErrors");
+const { ErrorReferenceNotFound, ErrorReferencesThemesLimit } = require("./referencesErrors");
 
 /**
  * @description CRUD References Class
@@ -23,15 +19,16 @@ class References {
    */
   async addOneReference(request, response, next) {
     try {
-      const reference = request.body;
+      const  reference  = request.body;
       const referenceThemesIds = reference.reference_theme_id
      
+      
       const referenceRequest = `
         INSERT
         INTO "references"
-          (reference_name, reference_country_name, reference_date, reference_content, reference_contributor_id, reference_category_id)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING reference_name, reference_country_name, reference_date, reference_content, reference_category_id, id as reference_theme_reference_id
+          (reference_name, reference_country_name, reference_date, reference_content,reference_category_id)
+        VALUES ($1, $2, $3, $4,$5,)
+        RETURNING reference_name, reference_country_name, reference_date, reference_content, reference_category_id,id as reference_theme_reference_id
       `;
 
       const referenceArgument = [
@@ -39,22 +36,21 @@ class References {
         reference.reference_country_name,
         reference.reference_date,
         reference.reference_content,
-        request.userId,
         reference.reference_category_id,
       ];
 
-      //TODO: To be used once the theme has been added on the front side
-      //if (referenceThemesIds.length === 0 || referenceThemesIds.length > 5) {
-      //  throw new ErrorReferencesThemesLimit();
-      //}
+      if (referenceThemesIds.length === 0 || referenceThemesIds.length > 5) {
+        throw new ErrorReferencesThemesLimit();
+      }
+
       const insertReference = await Postgres.query(referenceRequest, referenceArgument);
-      //TODO: To be used once the theme has been added on the front side
-      //for (let i in referenceThemesIds) {
-      //  await Postgres.query(`
-      //    INSERT INTO "reference_themes" (reference_theme_reference_id, reference_theme_id)
-      //    VALUES ($1, $2)
-      //  `, [insertReference.rows[0].reference_theme_reference_id, referenceThemesIds[i]]);
-      //}
+
+      for (let i in referenceThemesIds) {
+        await Postgres.query(`
+          INSERT INTO "reference_themes" (reference_theme_reference_id, reference_theme_id)
+          VALUES ($1, $2)
+        `, [insertReference.rows[0].reference_theme_reference_id, referenceThemesIds[i]]);
+      }
 
       // TODO: Return the reference with the elements created in base
       response.status(202).json({
@@ -67,13 +63,7 @@ class References {
         },
       });
     } catch (error) {
-      switch (error.code) {
-        case "23505":
-          next(new ErrorReferenceExist());
-          break;
-        default:
-          next(error);
-      }
+      next(error);
     }
   }
   /**
