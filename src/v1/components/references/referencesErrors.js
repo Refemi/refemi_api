@@ -2,12 +2,17 @@ const ErrorHandler = require('../../classes/ErrorHandler');
 
 class ErrorReferenceNotFound extends ErrorHandler {
   constructor() {
-    super('The reference was not found', 404);
+    super('La référence n\'a pas été trouvée', 404);
+  }
+}
+class ErrorReferenceAlreadyExist extends ErrorHandler {
+  constructor() {
+    super('La référence existe déjà', 409);
   }
 }
 class ErrorReferencesNotFound extends ErrorHandler {
   constructor() {
-    super('No references were found', 404);
+    super('Aucune référence n\'a été trouvée', 404);
   }
 }
 
@@ -20,6 +25,7 @@ class ErrorReferencesThemesLimit extends ErrorHandler {
 
 module.exports = {
   ErrorReferenceNotFound,
+  ErrorReferenceAlreadyExist,
   ErrorReferencesNotFound,
   ErrorReferencesThemesLimit
 }
