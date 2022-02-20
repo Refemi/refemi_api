@@ -1,7 +1,11 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
-const { ErrorReferenceNotFound, ErrorReferencesThemesLimit } = require("./referencesErrors");
+const {
+  ErrorReferenceNotFound,
+  ErrorReferenceAlreadyExist,
+  ErrorReferencesThemesLimit,
+} = require("./referencesErrors");
 
 /**
  * @description CRUD References Class
@@ -26,17 +30,18 @@ class References {
       const referenceRequest = `
         INSERT
         INTO "references"
-          (reference_name, reference_country_name, reference_date, reference_content,reference_category_id)
-        VALUES ($1, $2, $3, $4,$5,)
-        RETURNING reference_name, reference_country_name, reference_date, reference_content, reference_category_id,id as reference_theme_reference_id
+          (reference_contributor_id, reference_name, reference_country_name, reference_date, reference_content,reference_category_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING reference_name, reference_country_name, reference_date, reference_content, reference_category_id, id as reference_theme_reference_id
       `;
 
       const referenceArgument = [
+        request.userId,
         reference.reference_name,
         reference.reference_country_name,
         reference.reference_date,
         reference.reference_content,
-        reference.reference_category_id,
+        reference.reference_category_id
       ];
 
       if (referenceThemesIds.length === 0 || referenceThemesIds.length > 5) {
@@ -63,7 +68,11 @@ class References {
         },
       });
     } catch (error) {
-      next(error);
+      if (error.code === "23505") {
+        next(new ErrorReferenceAlreadyExist());
+      } else {
+        next(error);
+      }
     }
   }
   /**
@@ -263,7 +272,7 @@ class References {
    * Get reference by id
    * @route GET /api/v1/references/:id
    */
-  async getOneReference(request, response, next) {
+   async getOneReference(request, response, next) {
     try {
       const { id } = request.params;
       const referenceRequest = `
