@@ -34,7 +34,35 @@ class Search {
     } catch (error) {
       next(error);
     }
-  }    
+  }
+    /**
+   * Get reference by id
+   * @route GET /api/v1/search/:name
+   */
+    async getAllSearchReferencesByName (request, response, next) {  
+      try {
+        const { name } = request.params;
+        console.log(name)
+        const referencesRequest = `
+          SELECT "id", "reference_name"
+          FROM "references"
+          WHERE reference_name = $1
+        `;
+  
+        const referenceResult = await Postgres.query(referencesRequest, [name]);
+        console.log(referenceResult)
+        if (referenceResult.rowCount === 0) {
+          return next(new ErrorSearchNoResult())
+        }
+
+        response.status(200).json({
+          search : referenceResult.rows
+        });
+      } catch (error) {
+        next(error);
+      }
+    }    
+    
 }
 
 module.exports = new Search();
