@@ -10,7 +10,7 @@ const {
   ErrorHandler,
   ErrorUserPassword,
   ErrorUserCredential,
-  ErrorNewUser,
+  ErrorUserAlreadyExist,
   ErrorNewUserMissingCredential
 } = require("./authErrors");
 
@@ -45,7 +45,7 @@ class Auth {
       const userResult = await Postgres.query(userQuery, userArgument);
 
       if (userResult.rows.length > 0) {
-        throw new ErrorNewUser();
+        throw new ErrorUserAlreadyExist();
       }
 
       const NewUser = new User(userName, userEmail);
