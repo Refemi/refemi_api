@@ -14,9 +14,9 @@ class ErrorUserPassword extends ErrorHandler {
   }
 }
 // If the user or the email address already exists
-class ErrorNewUser extends ErrorHandler {
+class ErrorUserAlreadyExist extends ErrorHandler {
   constructor() {
-    super("Impossible de créer un compte avec ces informations", 409);
+    super("L'adresse mél sélectionnée est déjà enregistrée", 409);
   }
 }
 class ErrorNewUserMissingCredential extends ErrorHandler {
@@ -29,6 +29,6 @@ module.exports = {
   ErrorHandler,
   ErrorUserCredential,
   ErrorUserPassword,
-  ErrorNewUser,
+  ErrorUserAlreadyExist,
   ErrorNewUserMissingCredential
 };
