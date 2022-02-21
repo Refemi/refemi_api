@@ -107,7 +107,8 @@ class References {
           reference_contributor_id AS contributor,
           reference_country_name AS country,
           reference_creation_date AS created_at,
-          reference_validation_date AS validated_at
+          reference_validation_date AS validated_at,
+          reference_content AS content
         FROM "references"
         JOIN categories ON reference_category_id = categories.id
         LEFT JOIN sections ON categories.section_id = sections.id
@@ -225,7 +226,8 @@ class References {
           section_id AS "section_id",
           categories.id as category_id,
           array_agg(t.theme_label) as themes,
-          "references".reference_status as status
+          "references".reference_status as status,
+          reference_content AS content
         FROM "references"
         JOIN categories ON "references".reference_category_id = categories.id
         LEFT JOIN sections ON categories.section_id = sections.id
