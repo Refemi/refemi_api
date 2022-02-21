@@ -98,7 +98,7 @@ class Counters {
    */
   //
   async getDashboardAdminCounters (_, response, next) {
-    try {    
+    try {
       // Total approved contributions
       const totalApprovedContributionsRequest = `
         SELECT COUNT(*)
@@ -106,24 +106,21 @@ class Counters {
         INNER JOIN "users" ON "users".id = "references".reference_moderator_id
         WHERE "references".reference_status = true;
       `;
-      const totalApprovedContributionsResult = await Postgres.query(totalPendingContributionsRequest);
-    
+      const totalApprovedContributionsResult = await Postgres.query(totalApprovedContributionsRequest);
       // Total pending contributions
       const totalPendingContributionsRequest = `
         SELECT COUNT(*)
         FROM "references"
         WHERE "references".reference_status = false;
       `;
-      const pendingContributions = await Postgres.query(totalPendingContributionsRequest);
-    
+      const totalPendingContributionsResult = await Postgres.query(totalPendingContributionsRequest);
       // Total contributors
       const totalContributorsRequest = `
         SELECT COUNT(DISTINCT "reference_contributor_id")
         FROM "references"
         WHERE "reference_status" = true
       ;`;
-      const totalContributors = await Postgres.query(totalContributorsRequest);
-
+      const totalContributorsResult = await Postgres.query(totalContributorsRequest);
       // Total administrators
       const totalAdministratorsRequest = `
         SELECT COUNT(*)
@@ -131,12 +128,12 @@ class Counters {
         WHERE "user_role"=3
       `;
       const totalAdministratorsResult = await Postgres.query(totalAdministratorsRequest);
-    
+
       response.status(200).json({
         counters: {
-          totalApprovedContributions: parseInt(approvedContributions.rows[0].count),
-          totalPendingContributions: parseInt(pendingContributions.rows[0].count),
-          totalContributors: parseInt(totalContributors.rows[0].count),
+          totalApprovedContributions: parseInt(totalApprovedContributionsResult.rows[0].count),
+          totalPendingContributions: parseInt(totalPendingContributionsResult.rows[0].count),
+          totalContributors: parseInt(totalContributorsResult.rows[0].count),
           totalAdministrators: parseInt(totalAdministratorsResult.rows[0].count),
         }
       });
