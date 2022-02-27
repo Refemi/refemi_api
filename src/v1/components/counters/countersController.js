@@ -2,10 +2,8 @@ const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
 // Errors Handler
-const { ErrorHandler, ErrorReferencesNotFound } = require('./counterErrors');
+const { ErrorReferencesNotFound } = require('./counterErrors');
 
-
-//
 /**
  * @description Counters Class
  */
@@ -18,7 +16,6 @@ class Counters {
     try {
       // Counter for all validated references
       const totalReferenceByContributors = await Postgres.query(`
-  
         SELECT COUNT("references".id) AS references_count, COUNT(DISTINCT u.id) as contributors_count
         FROM "references"
         INNER JOIN "users" u on u.id = "references".reference_contributor_id
@@ -38,10 +35,11 @@ class Counters {
         [month]
       );
   
+      // Parse the SQL result to a int for client-side processing
       response.status(200).json({
-        totalReferences: totalReferenceByContributors.rows[0].references_count,
-        totalContributors: totalReferenceByContributors.rows[0].contributors_count,
-        monthReferences: monthRefs.rows[0].count,
+        totalReferences: parseInt(totalReferenceByContributors.rows[0].references_count),
+        totalContributors: parseInt(totalReferenceByContributors.rows[0].contributors_count),
+        monthReferences: parseInt(monthRefs.rows[0].count),
       });
     } catch (error) {
       next(error);
@@ -57,35 +55,21 @@ class Counters {
       const { userId } = request;
 
       // Number of validated contributions by user (contributor)
-      const totalApprovedContributionsRequest =`
-        SELECT COUNT(*) 
-        FROM "users"
-        INNER JOIN "references" ON "users".id = "references".reference_contributor_id
-        WHERE "users".id=$1 AND "references".reference_status=true;
+      const totalContributionsRequest =`
+        SELECT
+          (SELECT COUNT(*) FROM "references" WHERE "references".reference_status = TRUE AND "reference_contributor_id" = $1) AS total_approved_contributions,
+          (SELECT COUNT(*) FROM "references" WHERE "references".reference_status = FALSE AND "reference_contributor_id" = $1) AS total_pending_contributions
       `;
-      const totalApprovedContributionsResult = await Postgres.query(totalApprovedContributionsRequest, [userId]);
-
-      if (!totalApprovedContributionsResult) {
+      const totalContributionsResult = await Postgres.query(totalContributionsRequest, [userId]);
+      if (!totalContributionsResult) {
         throw new ErrorReferencesNotFound()
       }
   
-      // Number of pending contributions by user (contributor)
-      const totalPendingContributionsRequest =`
-        SELECT COUNT(*)
-        FROM "references"
-        INNER JOIN "users" ON "users".id = "references".reference_contributor_id
-        WHERE "users".id=$1 AND "references".reference_status=false;
-      `;
-      const totalPendingContributionsResult = await Postgres.query(totalPendingContributionsRequest, [request.userId]);
-
-      if (!totalPendingContributionsResult) {
-        throw new ErrorReferencesNotFound()
-      }
-
+      // Parse the SQL result to a int for client-side processing
       response.status(200).json({
         counters: {
-          totalApprovedContributions: parseInt(totalApprovedContributionsResult.rows[0].count),
-          totalPendingContributions: parseInt(totalPendingContributionsResult.rows[0].count)
+          totalApprovedContributions: parseInt(totalContributionsResult.rows[0].total_approved_contributions),
+          totalPendingContributions: parseInt(totalContributionsResult.rows[0].total_pending_contributions)
         }
       });
     } catch (error) {
@@ -100,41 +84,22 @@ class Counters {
   async getDashboardAdminCounters (_, response, next) {
     try {
       // Total approved contributions
-      const totalApprovedContributionsRequest = `
-        SELECT COUNT(*)
-        FROM "references"
-        INNER JOIN "users" ON "users".id = "references".reference_moderator_id
-        WHERE "references".reference_status = true;
+      const totalContributionsRequest = `
+        SELECT
+          (SELECT COUNT(*) FROM "references" WHERE "references".reference_status = TRUE) AS total_approved_contributions,
+          (SELECT COUNT(*) FROM "references" WHERE "references".reference_status = FALSE) AS total_pending_contributions,
+          (SELECT COUNT(DISTINCT "reference_contributor_id") FROM "references" WHERE "reference_status" = TRUE) AS total_contributors,
+          (SELECT COUNT(*) FROM "users" WHERE "user_role" = 3) AS total_administrators
       `;
-      const totalApprovedContributionsResult = await Postgres.query(totalApprovedContributionsRequest);
-      // Total pending contributions
-      const totalPendingContributionsRequest = `
-        SELECT COUNT(*)
-        FROM "references"
-        WHERE "references".reference_status = false;
-      `;
-      const totalPendingContributionsResult = await Postgres.query(totalPendingContributionsRequest);
-      // Total contributors
-      const totalContributorsRequest = `
-        SELECT COUNT(DISTINCT "reference_contributor_id")
-        FROM "references"
-        WHERE "reference_status" = true
-      ;`;
-      const totalContributorsResult = await Postgres.query(totalContributorsRequest);
-      // Total administrators
-      const totalAdministratorsRequest = `
-        SELECT COUNT(*)
-        FROM "users"
-        WHERE "user_role"=3
-      `;
-      const totalAdministratorsResult = await Postgres.query(totalAdministratorsRequest);
+      const totalContributionsResult = await Postgres.query(totalContributionsRequest);
 
+      // Parse the SQL result to a int for client-side processing
       response.status(200).json({
         counters: {
-          totalApprovedContributions: parseInt(totalApprovedContributionsResult.rows[0].count),
-          totalPendingContributions: parseInt(totalPendingContributionsResult.rows[0].count),
-          totalContributors: parseInt(totalContributorsResult.rows[0].count),
-          totalAdministrators: parseInt(totalAdministratorsResult.rows[0].count),
+          totalApprovedContributions: parseInt(totalContributionsResult.rows[0].total_approved_contributions),
+          totalPendingContributions: parseInt(totalContributionsResult.rows[0].total_pending_contributions),
+          totalContributors: parseInt(totalContributionsResult.rows[0].total_contributors),
+          totalAdministrators: parseInt(totalContributionsResult.rows[0].total_administrators),
         }
       });
     } catch (error) {
@@ -142,7 +107,5 @@ class Counters {
     }
   };
 }
-
-
 
 module.exports = new Counters();
