@@ -41,16 +41,15 @@ class Search {
    */
     async getAllSearchReferencesByName (request, response, next) {  
       try {
-        const { name } = request.params;
-        console.log(name)
+        const referencesArguments = request.params.name.split(' ');
+        // The query is formatted from the client arguments with PostGre proximity operators
         const referencesRequest = `
           SELECT "id", "reference_name"
           FROM "references"
-          WHERE to_tsvector ("reference_name") @@ to_tsquery ($1);
+          WHERE to_tsvector ("reference_name") @@ to_tsquery ('${referencesArguments.map((word) => word.toLowerCase()).join(' <-> ')}');
         `;
   
-        const referenceResult = await Postgres.query(referencesRequest, [name]);
-        console.log(referenceResult)
+        const referenceResult = await Postgres.query(referencesRequest);
         if (referenceResult.rowCount === 0) {
           return next(new ErrorSearchNoResult())
         }
