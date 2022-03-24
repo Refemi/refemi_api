@@ -50,9 +50,6 @@ class Search {
         `;
   
         const referenceResult = await Postgres.query(referencesRequest);
-        if (referenceResult.rowCount === 0) {
-          return next(new ErrorSearchNoResult())
-        }
 
         response.status(200).json({
           search : referenceResult.rows
