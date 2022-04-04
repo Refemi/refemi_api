@@ -1,3 +1,4 @@
+const https = require('https');
 const dotenv = require("dotenv");
 dotenv.config({
   path: "./config.env",
@@ -15,6 +16,17 @@ process.on("uncaughtException", (err) => {
 const server = app.listen(process.env.APIPORT, () => {
   console.log(`Listening on port ${process.env.APIPORT}`);
 });
+
+if (process.env.NODE_ENV === "production") {
+  const ssl = require('./v1/ssl')
+
+  const options = {
+    key: ssl.key,
+    cert: ssl.cert,
+  };
+
+  https.createServer(options, app).listen(process.env.HTTPSPORT);
+}
 
 // Unhandled Promise Rejection
 process.on("unhandledRejection", (err) => {
