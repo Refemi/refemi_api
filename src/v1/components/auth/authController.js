@@ -2,13 +2,16 @@
 const { Pool } = require("pg");
 const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
 
+// Import User Class
 const { User } = require("./auth");
 
+// Handle errors
 const {
   ErrorHandler,
-  ErrorUserNotFound,
+  ErrorUserPassword,
   ErrorUserCredential,
-  ErrorUserExist,
+  ErrorUserAlreadyExist,
+  ErrorNewUserMissingCredential
 } = require("./authErrors");
 
 /**
@@ -20,35 +23,47 @@ class Auth {
    * @param {string} request.body.name - user name
    * @param {string} request.body.mail - user mail
    * @param {string} request.body.password - user password hashed
+   * @route POST /api/v1/auth/signUp
    */
-  async addOneUser(request, response) {
+  async addOneUser(request, response, next) {
     try {
-      const { name, mail, password } = request.body;
+      const { userName, userEmail, userPassword } = request.body;
+      
+      if (!userName || !userEmail || !userPassword) {
+        throw new ErrorNewUserMissingCredential()
+      }
       // Regex : needs at least a number and 6 characters
-      const passwordValid = /(?!^[0-9]*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,50})$/;
-      const passwordTest = passwordValid.test(password);
+      const passwordRegex = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/;
+      const isValidPassword = passwordRegex.test(userPassword);
+      if (!isValidPassword) {
+        throw new ErrorUserPassword();        
+      }
 
       // Verify if user already exists before creating it
-      const userQuery = `SELECT * FROM "users" WHERE "user_mail" = $1`;
-      const userArgument = [mail];
-      const user = await Postgres.query(userQuery, userArgument);
+      const userQuery = `SELECT * FROM "users" WHERE "user_email" = $1`;
+      const userArgument = [userEmail];
+      const userResult = await Postgres.query(userQuery, userArgument);
 
-      if (user.rows.length === 0 && passwordTest) {
-        const salt = await bcrypt.genSalt(12);
-        const bcryptPassword = await bcrypt.hash(password, salt);
-
-        const addUserQuery =
-          'INSERT INTO "users" ("user_name", "user_mail", "user_password") VALUES ($1, $2, $3)';
-        const addUserArguments = [name, mail, bcryptPassword];
-
-        await Postgres.query(addUserQuery, addUserArguments);
-
-        response.status(201).json({
-          message: `New user has been created`,
-        });
+      if (userResult.rows.length > 0) {
+        throw new ErrorUserAlreadyExist();
       }
+
+      const NewUser = new User(userName, userEmail);
+      NewUser.password = await NewUser.encryptPassword(userPassword);
+
+      const addUserQuery = `
+        INSERT INTO "users" ("user_name", "user_email", "user_password")
+        VALUES ($1, $2, $3)
+      `;
+      const addUserArguments = [NewUser.name, NewUser.email, NewUser.password];
+
+      await Postgres.query(addUserQuery, addUserArguments);
+
+      response.status(201).json({
+        message: `L'utilisateur a bien été créé`,
+      });
     } catch (error) {
-      next(ErrorUserExist());
+      next(error);
     }
   }
   /**
@@ -60,58 +75,52 @@ class Auth {
     try {
       response.status(200).json({});
     } catch (error) {
-      if (
-        error instanceof ErrorUserNotFound ||
-        error instanceof ErrorUserCredential ||
-        error instanceof ErrorUserExist
-      ) {
-        next(error);
-      } else {
-        next(new ErrorHandler(error.message, error.status));
-      }
+      next(error);
     }
   }
   /**
    * Authentification
-   * @param {string} request.body.mail - user mail
+   * @param {string} request.body.email - user mail
    * @param {string} request.body.password - user password hashed
+   * @route POST /api/v1/auth/signIn
    */
-  async logIn(request, response, next) {
+  async logIn (request, response, next) {
     try {
-      const { mail, password } = request.body;
+      const { userEmail, userPassword } = request.body;
       const userRequest = `
-        SELECT * FROM "users" WHERE user_mail= $1
+        SELECT * FROM "users" WHERE user_email= $1
       `;
-      const userResult = await Postgres.query(userRequest, [mail]);
-
+      const userResult = await Postgres.query(userRequest, [userEmail]);
       if (userResult.rows.length === 0) {
-        throw new ErrorUserNotFound();
+        throw new Error();
       }
 
-      const user = new User(userResult.rows[0]);
+      // User object construction
+      const UserDB = new User(
+        userResult.rows[0].user_name,
+        userResult.rows[0].user_email,
+        userResult.rows[0].user_password,
+        userResult.rows[0].id,
+        userResult.rows[0].user_role
+      );
 
-      if (!user.checkCredentials(password)) {
+      // Checks if the sent password matches the registered one
+      const isAllow = await UserDB.checkCredentials(userPassword);
+
+      if (!isAllow) {
         throw new ErrorUserCredential();
-      }
-
-      response.status(200).json({
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-        accessToken: user.getNewToken(),
-      });
-    } catch (error) {
-      if (
-        error instanceof ErrorUserNotFound ||
-        error instanceof ErrorUserCredential ||
-        error instanceof ErrorUserExist
-      ) {
-        next(error);
       } else {
-        next(new ErrorHandler(error.message, error.status));
+        UserDB.token = UserDB.getNewToken();
+        response.status(200).json({
+          user: UserDB.getCredentials(),
+          accessToken: UserDB.token,
+        });
+      }
+    } catch (error) {
+      if (error instanceof ErrorUserCredential) {
+        next(error)
+      } else {
+        next(new ErrorHandler('Impossible de se connecter', 403));
       }
     }
   }

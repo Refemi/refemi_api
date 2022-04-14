@@ -1,21 +1,26 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
+const {
+  ErrorHandler,
+  ErrorUserPassword,
+} = require("./authErrors");
+
 /**
  * @description User Auth Class
- * @param {string} User.id
- * @param {string} User.name
- * @param {string} User.mail
- * @param {string} User.password
- * @param {string} User.role
+ * @param {string} userName
+ * @param {string} userEmail
+ * @param {string} userId
+ * @param {string} userPassword
+ * @param {string} userRole
  */
 class User {
-  constructor(User) {
-    this.id = User.id;
-    this.name = User.user_name;
-    this.email = User.user_mail;
-    this.password = User.user_password;
-    this.role = User.user_role;
+  constructor(name, email, password = "", id = -1, role = -1) {
+    this.id = id;
+    this.name = name;
+    this.email = email;
+    this.password = password;
+    this.role = role;
   }
   /**
    * Checks the user credentials
@@ -24,7 +29,6 @@ class User {
    */
   async checkCredentials(password) {
     const isPasswordValid = await bcrypt.compare(password, this.password);
-
     if (!isPasswordValid) {
       return false;
     }
@@ -46,6 +50,28 @@ class User {
         expiresIn: 86400,
       }
     );
+  }
+  /**
+   * Returns the user object
+   * @return {string} credentials.userName
+   * @return {string} credentials.userEmail
+   * @return {string} credentials.userRole
+   */
+  getCredentials() {
+    return {
+      name: this.name,
+      email: this.email,
+      role: this.role,
+    };
+  }
+  /**
+   * Generate a new hashed password
+   * @param {string} password 
+   * @returns {string} hashed password
+   */
+  async encryptPassword(password) {
+    const salt = await bcrypt.genSalt(12);
+    return bcrypt.hash(password, salt);
   }
 }
 

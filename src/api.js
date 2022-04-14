@@ -4,7 +4,8 @@ const cors = require("cors");
 const v1 = require("./v1");
 
 const corsOptions = {
-  origin: process.env.CORSORIGIN,
+  // Set the allowed origins to all domains
+  origin: new RegExp(process.env.CORSORIGIN)
 };
 
 /* Calls API that will give different versions available */
