@@ -41,24 +41,20 @@ class Search {
    */
     async getAllSearchReferencesByName (request, response, next) {  
       try {
-        const referencesArguments = request.params.name.split(' ');
-        // The query is formatted from the client arguments with PostGre proximity operators
         const referencesRequest = `
           SELECT "id", "reference_name"
           FROM "references"
-          WHERE to_tsvector ("reference_name") @@ to_tsquery ('${referencesArguments.map((word) => word.toLowerCase()).join(' <-> ')}');
+          WHERE lower("reference_name") LIKE '%${request.params.name.toLowerCase()}%'
         `;
   
         const referenceResult = await Postgres.query(referencesRequest);
-
         response.status(200).json({
           search : referenceResult.rows
         });
       } catch (error) {
         next(error);
       }
-    }    
-    
+    }
 }
 
 module.exports = new Search();
