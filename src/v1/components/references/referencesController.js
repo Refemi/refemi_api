@@ -227,6 +227,7 @@ class References {
    */
   async getAllReferencesByUser(request, response, next) {
     try {
+       // userid is obtained from the token
       const { userId } = request;
 
       const referencesRequest = `
