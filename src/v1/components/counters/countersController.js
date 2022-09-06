@@ -52,6 +52,7 @@ class Counters {
   //
   async getDashboardUserCounters (request, response, next) {
     try {
+      // userid is obtained from the token
       const { userId } = request;
 
       // Number of validated contributions by user (contributor)

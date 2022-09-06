@@ -13,6 +13,7 @@ router.get(
 router.get("/:id", CategoriesController.getOneCategory);
 router.post("/", CategoriesController.addOneCategory);
 router.put("/:id", CategoriesController.updateOneCategory);
+// < isadmin > middleware used to give only admin access to the route
 router.delete("/:id", isAdmin, CategoriesController.deleteOneCategory);
 
 module.exports = router;
