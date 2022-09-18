@@ -16,7 +16,7 @@ class Sections {
     try {
       const sectionsQuery = `
         SELECT
-          id, section_name AS name, section_label AS label
+          id, section_name AS name, section_label AS label, activated
         FROM sections
       `;
       const sectionsResult = await Postgres.query(sectionsQuery);
