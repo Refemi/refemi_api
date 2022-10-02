@@ -43,7 +43,6 @@ class Auth {
       const userQuery = `SELECT * FROM "users" WHERE "user_email" = $1`;
       const userArgument = [userEmail];
       const userResult = await Postgres.query(userQuery, userArgument);
-
       if (userResult.rows.length > 0) {
         throw new ErrorUserAlreadyExist();
       }

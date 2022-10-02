@@ -25,7 +25,14 @@ class References {
     try {
       const  reference  = request.body;
       const referenceThemesIds = reference.reference_theme_id
-     
+
+      // Verify if reference already exists before creating it
+      const referenceQuery = `SELECT * FROM "references" WHERE "reference_name" = $1`;
+      const referenceNameArgument = [reference.reference_name] ;
+      const referenceNameResult = await Postgres.query(referenceQuery, referenceNameArgument);
+      if (referenceNameResult.rows.length > 0) {
+         throw new ErrorReferenceAlreadyExist();
+      }
       
       const referenceRequest = `
         INSERT
