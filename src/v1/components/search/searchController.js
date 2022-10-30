@@ -15,7 +15,7 @@ class Search {
       const search = request.query.answer;
 
       const searchRequest = `
-      SELECT categories.category_name AS category, "references".id , "reference_name" as name, "reference_country_name" as country, "reference_category_id", "reference_author" as author, (SELECT array_agg(t.theme_label) as themes
+      SELECT DISTINCT categories.category_name AS category, "references".id , "reference_name" as name, "reference_country_name" as country, "reference_category_id", "reference_author" as author, (SELECT array_agg(t.theme_label) as themes
       FROM "references" AS sousReference
         JOIN categories sousCategories ON sousReference.reference_category_id = sousCategories.id
         LEFT JOIN sections sourSection ON sousCategories.section_id = sourSection.id
