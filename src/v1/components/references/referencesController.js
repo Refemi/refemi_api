@@ -14,26 +14,29 @@ class References {
   /**
    * Create a new reference
    * @param {string} reference.reference_name - Name of the reference
-   * @param {string} reference.reference_country_name - Name of the reference
-   * @param {string} reference.reference_date - Name of the reference
-   * @param {string} reference.reference_content - Name of the reference
-   * @param {string} reference.reference_category_id - Name of the reference
+   * @param {string} reference.reference_country_name - Country of reference
+   * @param {string} reference.reference_date - date the reference
+   * @param {string} reference.reference_content - Content of the reference
+   * @param {string} reference.reference_category_id - Category of the reference
    * @param {array} reference.reference_theme_id - id of the themes
    * @route POST /api/v1/references
    */
   async addOneReference(request, response, next) {
     try {
-      const  reference  = request.body;
-      const referenceThemesIds = reference.reference_theme_id
+      const reference = request.body;
+      const referenceThemesIds = reference.reference_theme_id;
 
       // Verify if reference already exists before creating it
       const referenceQuery = `SELECT * FROM "references" WHERE "reference_name" = $1`;
-      const referenceNameArgument = [reference.reference_name] ;
-      const referenceNameResult = await Postgres.query(referenceQuery, referenceNameArgument);
+      const referenceNameArgument = [reference.reference_name];
+      const referenceNameResult = await Postgres.query(
+        referenceQuery,
+        referenceNameArgument
+      );
       if (referenceNameResult.rows.length > 0) {
-         throw new ErrorReferenceAlreadyExist();
+        throw new ErrorReferenceAlreadyExist();
       }
-      
+
       const referenceRequest = `
         INSERT
         INTO "references"
@@ -48,20 +51,29 @@ class References {
         reference.reference_country_name,
         reference.reference_date,
         reference.reference_content,
-        reference.reference_category_id
+        reference.reference_category_id,
       ];
 
       if (referenceThemesIds.length === 0 || referenceThemesIds.length > 5) {
         throw new ErrorReferencesThemesLimit();
       }
 
-      const insertReference = await Postgres.query(referenceRequest, referenceArgument);
+      const insertReference = await Postgres.query(
+        referenceRequest,
+        referenceArgument
+      );
 
       for (let i in referenceThemesIds) {
-        await Postgres.query(`
+        await Postgres.query(
+          `
           INSERT INTO "reference_themes" (reference_theme_reference_id, reference_theme_id)
           VALUES ($1, $2)
-        `, [insertReference.rows[0].reference_theme_reference_id, referenceThemesIds[i]]);
+        `,
+          [
+            insertReference.rows[0].reference_theme_reference_id,
+            referenceThemesIds[i],
+          ]
+        );
       }
 
       // TODO: Return the reference with the elements created in base
@@ -118,6 +130,7 @@ class References {
           "references".id AS id, "references".reference_name AS name,
           section_id AS "section_id",
           categories.id AS category_id, 
+          reference_author AS author,
           array_agg(themes.theme_label) AS themes,
           reference_status AS status,
           reference_contributor_id AS contributor,
@@ -167,6 +180,7 @@ class References {
         SELECT
           "references".id AS id, "references".reference_name AS name,
           categories.category_name AS category,
+          "reference_author" AS author,
           array_agg(themes.theme_label) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date
@@ -222,7 +236,7 @@ class References {
       if (!referencesResult || referencesResult.rowCount === 0) {
         throw new ErrorReferenceNotFound();
       }
-      
+
       response.status(200).json({ references: referencesResult.rows });
     } catch (error) {
       next(error);
@@ -234,7 +248,7 @@ class References {
    */
   async getAllReferencesByUser(request, response, next) {
     try {
-       // userid is obtained from the token
+      // userid is obtained from the token
       const { userId } = request;
 
       const referencesRequest = `
@@ -282,7 +296,7 @@ class References {
    * Get reference by id
    * @route GET /api/v1/references/:id
    */
-   async getOneReference(request, response, next) {
+  async getOneReference(request, response, next) {
     try {
       const { id } = request.params;
       const referenceRequest = `

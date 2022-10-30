@@ -10,54 +10,62 @@ class Search {
    * @param {Object} request.query.answer - Search
    * @route POST /api/v1/search
    */
-  async getAllSearch (request, response, next) {
+  async getAllSearch(request, response, next) {
     try {
       const search = request.query.answer;
 
       const searchRequest = `
-        SELECT "id", "reference_name", "reference_content", "reference_country_name", "reference_category_id"
-        FROM "references"
-        WHERE to_tsvector (
-          "reference_name" || ' ' ||"reference_country_name" || ' ' ||"reference_content" || ' ' || "reference_country_name" || ' ' ||"reference_category_id")
-          @@ to_tsquery ($1);
+      SELECT categories.category_name AS category, "references".id , "reference_name", "reference_country_name", "reference_category_id", "reference_author" as author, (SELECT array_agg(t.theme_label) as themes
+      FROM "references" AS sousReference
+        JOIN categories sousCategories ON sousReference.reference_category_id = sousCategories.id
+        LEFT JOIN sections sourSection ON sousCategories.section_id = sourSection.id
+        LEFT JOIN reference_themes sRt  ON "references".id = sRt.reference_theme_reference_id
+        LEFT JOIN themes t ON t.id = sRt.reference_theme_id
+      WHERE sousReference.id = "references".id)
+          FROM "references"
+          JOIN categories ON "references".reference_category_id = categories.id
+        LEFT JOIN sections ON categories.section_id = sections.id
+        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
+        LEFT JOIN themes ON themes.id = rt.reference_theme_id
+          WHERE to_tsvector (
+            "reference_name" || ' ' ||"reference_country_name" || ' ' ||"reference_content" || ' ' || "reference_country_name" || ' ' ||"reference_category_id")
+            @@ to_tsquery ($1);
       `;
 
       const searchResult = await Postgres.query(searchRequest, [search]);
 
       if (searchResult.rowCount === 0) {
-        return next(new ErrorSearchNoResult())
+        return next(new ErrorSearchNoResult());
       }
 
       response.status(200).json({
-        search : searchResult.rows
+        search: searchResult.rows,
       });
     } catch (error) {
       next(error);
     }
   }
-    /**
+  /**
    * Get reference_name to suggest the titel in input rafernce name
    * @route GET /api/v1/search/reference-name
    */
-    async getAllSearchReferencesByName (request, response, next) {  
-      try {
-        const referencesRequest = `
+  async getAllSearchReferencesByName(request, response, next) {
+    try {
+      const referencesRequest = `
           SELECT "id", "reference_name"
           FROM "references"
         `;
-        const referenceResult = await Postgres.query(referencesRequest);
-        response.status(200).json({
-          search : referenceResult.rows
-        });
-      } catch (error) {
-        next(error);
-      }
+      const referenceResult = await Postgres.query(referencesRequest);
+      response.status(200).json({
+        search: referenceResult.rows,
+      });
+    } catch (error) {
+      next(error);
     }
+  }
 }
 
 module.exports = new Search();
-
-
 
 // const { Pool } = require("pg");
 // const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
@@ -80,7 +88,6 @@ module.exports = new Search();
 //     res.status(200).json({
 //       search : result.rows});
 
-    
 //   }catch (error) {
 //     res.status(500).json({
 //       message: "The server encountered an unexpected condition which prevented it from fulfilling the request",
