@@ -36,17 +36,15 @@ class Search {
     }
   }
     /**
-   * Get reference by id
-   * @route GET /api/v1/search/:name
+   * Get reference_name to suggest the titel in input rafernce name
+   * @route GET /api/v1/search/reference-name
    */
     async getAllSearchReferencesByName (request, response, next) {  
       try {
         const referencesRequest = `
           SELECT "id", "reference_name"
           FROM "references"
-          WHERE lower("reference_name") LIKE '%${request.params.name.toLowerCase()}%'
         `;
-  
         const referenceResult = await Postgres.query(referencesRequest);
         response.status(200).json({
           search : referenceResult.rows
