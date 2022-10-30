@@ -7,9 +7,6 @@ const {
   ErrorReferencesThemesLimit,
 } = require("./referencesErrors");
 
-/**
- * @description CRUD References Class
- */
 class References {
   /**
    * Create a new reference
@@ -54,6 +51,7 @@ class References {
         reference.reference_category_id,
       ];
 
+      // limit the number of themes between 1 and 5
       if (referenceThemesIds.length === 0 || referenceThemesIds.length > 5) {
         throw new ErrorReferencesThemesLimit();
       }
@@ -76,7 +74,6 @@ class References {
         );
       }
 
-      // TODO: Return the reference with the elements created in base
       response.status(202).json({
         reference: {
           name: reference.reference_name,
@@ -94,10 +91,9 @@ class References {
       }
     }
   }
+
   /**
    * Delete a reference by id
-   * @param Number id - Id of the reference to delete
-   * @route DELETE /api/v1/references/:id
    */
   async deleteOneReference(request, response, next) {
     try {
@@ -119,9 +115,9 @@ class References {
       next(error);
     }
   }
+
   /**
    * Get all references
-   * @route GET /api/v1/references
    */
   async getAllReferences(_, response, next) {
     try {
@@ -169,9 +165,9 @@ class References {
       next(error);
     }
   }
+
   /**
    * Get reference by section id
-   * @route GET /api/v1/references/section/:id
    */
   async getAllReferencesBySection(request, response, next) {
     try {
@@ -204,9 +200,9 @@ class References {
       next(error);
     }
   }
+
   /**
    * Get references by theme id
-   * @route GET /api/v1/references/theme/:id
    */
   async getAllReferencesByTheme(request, response, next) {
     try {
@@ -242,9 +238,9 @@ class References {
       next(error);
     }
   }
+
   /**
    * Get references by user id
-   * @route GET /api/v1/references/user/
    */
   async getAllReferencesByUser(request, response, next) {
     try {
@@ -292,9 +288,9 @@ class References {
       next(error);
     }
   }
+
   /**
    * Get reference by id
-   * @route GET /api/v1/references/:id
    */
   async getOneReference(request, response, next) {
     try {
@@ -303,6 +299,7 @@ class References {
         SELECT
           "references".id AS id, "references".reference_name AS name,
           categories.category_name AS category,
+          "references".reference_category_id  AS categoryId,
           array_agg(themes.theme_label) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date,
@@ -327,9 +324,9 @@ class References {
       next(error);
     }
   }
+
   /**
    * Update a reference by id
-   * @route PUT /api/v1/references/:id
    */
   async updateOneReference(_request, response, next) {
     try {

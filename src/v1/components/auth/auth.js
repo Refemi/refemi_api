@@ -1,11 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const {
-  ErrorHandler,
-  ErrorUserPassword,
-} = require("./authErrors");
-
 /**
  * @description User Auth Class
  * @param {string} userName
@@ -22,10 +17,9 @@ class User {
     this.password = password;
     this.role = role;
   }
+
   /**
    * Checks the user credentials
-   * @param {string} password
-   * @returns {boolean}
    */
   async checkCredentials(password) {
     const isPasswordValid = await bcrypt.compare(password, this.password);
@@ -35,10 +29,8 @@ class User {
 
     return true;
   }
-  /**
-   * Generates a new token
-   * @returns {string} token
-   */
+
+  //Generates a new token
   getNewToken() {
     return jwt.sign(
       {
@@ -51,11 +43,9 @@ class User {
       }
     );
   }
+
   /**
    * Returns the user object
-   * @return {string} credentials.userName
-   * @return {string} credentials.userEmail
-   * @return {string} credentials.userRole
    */
   getCredentials() {
     return {
@@ -64,10 +54,9 @@ class User {
       role: this.role,
     };
   }
+
   /**
    * Generate a new hashed password
-   * @param {string} password 
-   * @returns {string} hashed password
    */
   async encryptPassword(password) {
     const salt = await bcrypt.genSalt(12);

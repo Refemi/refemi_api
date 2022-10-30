@@ -4,10 +4,9 @@ dotenv.config({
 });
 
 const jwt = require("jsonwebtoken");
-const JWT_SECRET = process.env.JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const ErrorHandler = require("../classes/ErrorHandler");
-
 
 const verifyToken = (request, _, next) => {
   try {
@@ -15,9 +14,9 @@ const verifyToken = (request, _, next) => {
     jwt.verify(token, JWT_SECRET, (error, decoded) => {
       if (error) {
         if (error.expiredAt) {
-          throw new ErrorHandler('Token expired', 498);
+          throw new ErrorHandler("Token expired", 498);
         } else {
-          throw new ErrorHandler('Invalid Token!', 401);
+          throw new ErrorHandler("Invalid Token!", 401);
         }
       }
 
@@ -28,6 +27,6 @@ const verifyToken = (request, _, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
 module.exports = verifyToken;
