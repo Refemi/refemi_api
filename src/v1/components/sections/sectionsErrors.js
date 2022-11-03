@@ -1,4 +1,4 @@
-const ErrorHandler = require('../../classes/ErrorHandler');
+const ErrorHandler = require("../../classes/ErrorHandler");
 
 class ErrorSectionNotFound extends ErrorHandler {
   constructor() {
@@ -6,7 +6,6 @@ class ErrorSectionNotFound extends ErrorHandler {
   }
 }
 
-
 module.exports = {
-  ErrorSectionNotFound
-}
+  ErrorSectionNotFound,
+};

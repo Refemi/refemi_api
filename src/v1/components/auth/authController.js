@@ -11,7 +11,7 @@ const {
   ErrorUserPassword,
   ErrorUserCredential,
   ErrorUserAlreadyExist,
-  ErrorNewUserMissingCredential
+  ErrorNewUserMissingCredential,
 } = require("./authErrors");
 
 /**
@@ -28,15 +28,16 @@ class Auth {
   async addOneUser(request, response, next) {
     try {
       const { userName, userEmail, userPassword } = request.body;
-      
+
       if (!userName || !userEmail || !userPassword) {
-        throw new ErrorNewUserMissingCredential()
+        throw new ErrorNewUserMissingCredential();
       }
       // Regex : needs at least a number and 6 characters
-      const passwordRegex = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/;
+      const passwordRegex =
+        /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/;
       const isValidPassword = passwordRegex.test(userPassword);
       if (!isValidPassword) {
-        throw new ErrorUserPassword();        
+        throw new ErrorUserPassword();
       }
 
       // Verify if user already exists before creating it
@@ -65,10 +66,9 @@ class Auth {
       next(error);
     }
   }
+
   /**
    * Check if user is still authentificated to enable verifyToken() to work
-   * @param {string} request.body.mail - user mail
-   * @param {string} request.body.password - user password hashed
    */
   async checkAuth(_, response, next) {
     try {
@@ -77,13 +77,11 @@ class Auth {
       next(error);
     }
   }
+
   /**
    * Authentification
-   * @param {string} request.body.email - user mail
-   * @param {string} request.body.password - user password hashed
-   * @route POST /api/v1/auth/signIn
    */
-  async logIn (request, response, next) {
+  async logIn(request, response, next) {
     try {
       const { userEmail, userPassword } = request.body;
       const userRequest = `
@@ -117,9 +115,9 @@ class Auth {
       }
     } catch (error) {
       if (error instanceof ErrorUserCredential) {
-        next(error)
+        next(error);
       } else {
-        next(new ErrorHandler('Impossible de se connecter', 403));
+        next(new ErrorHandler("Impossible de se connecter", 403));
       }
     }
   }

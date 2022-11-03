@@ -1,19 +1,18 @@
-const ErrorHandler = require('../../classes/ErrorHandler');
+const ErrorHandler = require("../../classes/ErrorHandler");
 
 class ErrorThemesExist extends ErrorHandler {
   constructor() {
-    super('Reference already exist', 409);
+    super("Reference already exist", 409);
   }
 }
 class ErrorThemesNotFound extends ErrorHandler {
   constructor() {
-    super('Reference not found', 404);
+    super("Reference not found", 404);
   }
 }
-
 
 module.exports = {
   ErrorHandler,
   ErrorThemesExist,
-  ErrorThemesNotFound
-}
+  ErrorThemesNotFound,
+};
