@@ -261,7 +261,8 @@ class References {
         LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
         LEFT JOIN themes t ON t.id = rt.reference_theme_id
         WHERE "references".reference_contributor_id = $1
-        GROUP BY "references".id, category_name, category_id
+        GROUP BY "references".id, category_name, category_id 
+        
       `;
 
       const referencesResult = await Postgres.query(referencesRequest, [
@@ -303,6 +304,7 @@ class References {
           array_agg(themes.theme_label) AS themes,
           "references".reference_country_name AS country,
           "references".reference_date AS date,
+          "references".reference_status as status,
           "references".reference_author AS author,
           "references".reference_content AS content
         FROM "references"
@@ -326,16 +328,24 @@ class References {
   }
 
   /**
-   * Update a reference by id
+   * Update the reference status to validated the reference
    */
-  async updateOneReference(_request, response, next) {
-    try {
-      response.status(200).json({
-        message: "reference has been updated",
-      });
-    } catch (error) {
-      next(error);
-    }
+  async updateOneReference(request, response, next) {
+         const { id } = request.params;
+         const {reference_status} = request.body
+
+          try {
+            const referenceRequest = `
+                UPDATE "references" SET  reference_status = $1 WHERE "references".id = $2
+                `
+            await Postgres.query(referenceRequest, [reference_status, id]);
+              response.status(200).json({
+                message: "reference has been updated",
+              });
+          } 
+          catch (error) {
+            next(error);
+          }
   }
 }
 
