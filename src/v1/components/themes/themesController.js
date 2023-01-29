@@ -14,7 +14,6 @@ class Themes {
   getAllThemes = async (_, response, next) => {
     try {
       let themes;
-      console.log("coucou");
       const themesQuery = `
         SELECT id, theme_name AS name, theme_label AS label FROM themes
       `;
