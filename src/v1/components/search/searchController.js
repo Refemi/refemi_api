@@ -1,5 +1,5 @@
 const { Pool } = require("pg");
-const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
+const Postgres = new Pool();
 
 // Errors Route
 const { ErrorSearchNoResult } = require("./searchErrors");
