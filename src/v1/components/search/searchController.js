@@ -15,21 +15,21 @@ class Search {
       const search = request.query.answer;
 
       const searchRequest = `
-      SELECT DISTINCT categories.category_name AS category, "references".id , "reference_name" as name, "reference_country_name" as country, "reference_category_id", "reference_author" as author, (SELECT array_agg(t.theme_label) as themes
-      FROM "references" AS sousReference
-        JOIN categories sousCategories ON sousReference.reference_category_id = sousCategories.id
-        LEFT JOIN sections sourSection ON sousCategories.section_id = sourSection.id
-        LEFT JOIN reference_themes sRt  ON "references".id = sRt.reference_theme_reference_id
-        LEFT JOIN themes t ON t.id = sRt.reference_theme_id
-      WHERE sousReference.id = "references".id)
-          FROM "references"
-          JOIN categories ON "references".reference_category_id = categories.id
+      SELECT DISTINCT categories.category_name AS category, "references".id , "references".title as name, array_agg(DISTINCT countries.country_name) AS country,
+      "references".category_id, array_agg(DISTINCT authors.author_name) AS author, array_agg(DISTINCT themes.theme_label) as themes
+      FROM "references"
+        JOIN categories ON category_id = categories.id
         LEFT JOIN sections ON categories.section_id = sections.id
-        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-        LEFT JOIN themes ON themes.id = rt.reference_theme_id
+        LEFT JOIN references_themes rt  ON "references".id = rt.reference_id
+        LEFT JOIN themes ON themes.id = rt.theme_id
+        LEFT JOIN references_authors ra ON "references".id = ra.reference_id
+        LEFT JOIN authors ON authors.id = ra.author_id
+        LEFT JOIN references_countries rc ON "references".id = rc.reference_id
+        LEFT JOIN countries ON countries.id = rc.country_id
           WHERE to_tsvector (
-            "reference_name" || ' ' ||"reference_country_name" || ' ' ||"reference_content" || ' ' || "reference_country_name" || ' ' ||"reference_category_id")
-            @@ to_tsquery ($1);
+            "title" || ' ' ||"country_name" || ' ' || "author_name" || ' ' ||"category_id")
+            @@ to_tsquery ('good')
+            GROUP BY categories.category_name, "references".id;
       `;
 
       const searchResult = await Postgres.query(searchRequest, [search]);
