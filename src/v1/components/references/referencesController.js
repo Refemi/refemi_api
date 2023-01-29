@@ -207,7 +207,8 @@ class References {
       const referencesRequest = `
       SELECT "references".id AS id, "references".title AS name,
       section_id,
-      category_id, 
+      categories.category_label AS category_label, 
+      categories.category_name AS category_name, 
       array_agg(DISTINCT authors.author_name) AS author,
       array_agg(DISTINCT themes.theme_name) AS themes,
       "references".is_active,
