@@ -244,22 +244,21 @@ class References {
     try {
       // userid is obtained from the token
       const { userId } = request;
-
+      console.log(userId);
       const referencesRequest = `
-        SELECT
-          "references".id as id, "references".reference_name as name,
-          section_id AS "section_id",
-          categories.id as category_id,
-          array_agg(t.theme_label) as themes,
-          "references".reference_status as status,
-          reference_content AS content
-        FROM "references"
-        JOIN categories ON "references".reference_category_id = categories.id
-        LEFT JOIN sections ON categories.section_id = sections.id
-        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-        LEFT JOIN themes t ON t.id = rt.reference_theme_id
-        WHERE "references".reference_contributor_id = $1
-        GROUP BY "references".id, category_name, category_id
+      SELECT
+      "references".id as id, "references".title as name,
+      section_id AS "section_id",
+      categories.id as category_id,
+      array_agg(t.theme_label) as themes,
+      "references".is_active as validated
+    FROM "references"
+    JOIN categories ON "references".category_id = categories.id
+    LEFT JOIN sections ON categories.section_id = sections.id
+    LEFT JOIN references_themes rt  ON "references".id = rt.reference_id
+    LEFT JOIN themes t ON t.id = rt.theme_id
+    WHERE "references".contributor_id = $1
+    GROUP BY "references".id, category_name, categories.id, categories.section_id
       `;
 
       const referencesResult = await Postgres.query(referencesRequest, [
@@ -271,7 +270,7 @@ class References {
       }
       const references = referencesResult.rows.reduce(
         (references, reference) => {
-          if (reference.status) {
+          if (reference.validated) {
             references.validated.push(reference);
           } else {
             references.pending.push(reference);
