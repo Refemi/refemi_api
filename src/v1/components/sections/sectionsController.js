@@ -12,8 +12,9 @@ class Sections {
     try {
       const sectionsQuery = `
         SELECT
-          id, section_name AS name, section_label AS label, activated
+          id, section_name AS name, section_label AS label
         FROM sections
+        WHERE is_active = true
       `;
       const sectionsResult = await Postgres.query(sectionsQuery);
 
