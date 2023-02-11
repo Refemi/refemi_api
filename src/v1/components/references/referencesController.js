@@ -169,7 +169,7 @@ class References {
       "references".id AS id, "references".title AS name,
       categories.category_name AS category,
       array_agg(DISTINCT authors.author_name) AS author,
-      array_agg(themes.theme_name) AS themes,
+      array_agg(DISTINCT themes.theme_name) AS themes,
       array_agg(DISTINCT countries.country_name) AS country,
       "references".reference_date AS date
     FROM "references"
@@ -250,7 +250,7 @@ class References {
       "references".id as id, "references".title as name,
       section_id AS "section_id",
       categories.id as category_id,
-      array_agg(t.theme_label) as themes,
+      array_agg(DISTINCT t.theme_label) as themes,
       "references".is_active as validated
     FROM "references"
     JOIN categories ON "references".category_id = categories.id
@@ -293,22 +293,40 @@ class References {
     try {
       const { id } = request.params;
       const referenceRequest = `
-        SELECT
-          "references".id AS id, "references".reference_name AS name,
-          categories.category_name AS category,
-          "references".reference_category_id  AS categoryId,
-          array_agg(themes.theme_label) AS themes,
-          "references".reference_country_name AS country,
-          "references".reference_date AS date,
-          "references".reference_author AS author,
-          "references".reference_content AS content
-        FROM "references"
-        JOIN categories ON "references".reference_category_id = categories.id
-        LEFT JOIN sections ON categories.section_id = sections.id
-        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-        LEFT JOIN themes ON themes.id = rt.reference_theme_id
-        WHERE "references".id = $1
-        GROUP BY "references".id, categories.category_name;
+      SELECT
+      "references".id AS id, "references".title AS "name",
+      categories.category_name AS category,
+      "references".category_id  AS categoryId,
+      array_agg(DISTINCT themes.theme_name) AS themes,
+      array_agg(DISTINCT countries.country_name) AS themes,
+      "references".reference_date AS "date",
+      array_agg(DISTINCT authors.author_name) AS authors,
+      c.extract_and_quotes AS extractsAndQuotes,
+      c.back_cover AS backCover,
+      c.context AS context,
+      c.book_structure AS bookStructure,
+      c.analysis AS analysis,
+      c.about_author AS aboutAuthor,
+      c.sources AS sources, 
+      c.to_go_further AS toGoFurther,
+      c.synopsis AS synopsis,
+      c.about_reference AS aboutReference,
+      c.actors AS actors,
+      c.episodes AS episodes,
+      c.links AS links
+    FROM "references"
+    JOIN categories ON "references".category_id = categories.id
+    LEFT JOIN sections ON categories.section_id = sections.id
+    LEFT JOIN references_themes rt  ON "references".id = rt.reference_id
+    LEFT JOIN themes ON themes.id = rt.theme_id
+    LEFT JOIN references_authors ra ON "references".id = ra.reference_id
+    LEFT JOIN authors ON authors.id = ra.author_id
+    LEFT JOIN references_countries rc ON "references".id = rc.reference_id
+    LEFT JOIN countries ON countries.id = rc.country_id
+    LEFT JOIN contents c ON "references".id = c.reference_id
+    WHERE "references".id = $1
+    GROUP BY "references".id, categories.category_name, extract_and_quotes, c.back_cover, c.context, c.book_structure, c.analysis,
+   c.about_author, c.sources, c.to_go_further, c.synopsis, c.about_reference, c.actors, c.episodes, c.links;
       `;
       const referenceResult = await Postgres.query(referenceRequest, [id]);
 
