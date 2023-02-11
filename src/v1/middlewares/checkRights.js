@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
-const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
+const Postgres = new Pool();
 
 const roles = require("../config/roles");
 

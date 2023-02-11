@@ -1,4 +1,4 @@
-const https = require('https');
+const https = require("https");
 const dotenv = require("dotenv");
 dotenv.config({
   path: "./config.env",
@@ -18,7 +18,7 @@ const server = app.listen(process.env.APIPORT, () => {
 });
 
 if (process.env.NODE_ENV === "production") {
-  const ssl = require('./v1/ssl')
+  const ssl = require("./v1/ssl");
 
   const options = {
     key: ssl.key,
@@ -30,6 +30,7 @@ if (process.env.NODE_ENV === "production") {
 
 // Unhandled Promise Rejection
 process.on("unhandledRejection", (err) => {
+  console.log(err);
   console.log(`Error: ${err.message}`);
   console.log(`Shutting down the server due to Unhandled Promise Rejection`);
 
