@@ -1,5 +1,5 @@
 const { Pool } = require("pg");
-const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
+const Postgres = new Pool();
 
 const {
   ErrorReferenceNotFound,
@@ -8,16 +8,6 @@ const {
 } = require("./referencesErrors");
 
 class References {
-  /**
-   * Create a new reference
-   * @param {string} reference.reference_name - Name of the reference
-   * @param {string} reference.reference_country_name - Country of reference
-   * @param {string} reference.reference_date - date the reference
-   * @param {string} reference.reference_content - Content of the reference
-   * @param {string} reference.reference_category_id - Category of the reference
-   * @param {array} reference.reference_theme_id - id of the themes
-   * @route POST /api/v1/references
-   */
   async addOneReference(request, response, next) {
     try {
       const reference = request.body;
@@ -123,23 +113,25 @@ class References {
     try {
       const referencesRequest = `  
         SELECT
-          "references".id AS id, "references".reference_name AS name,
-          section_id AS "section_id",
-          categories.id AS category_id, 
-          reference_author AS author,
-          array_agg(themes.theme_label) AS themes,
-          reference_status AS status,
-          reference_contributor_id AS contributor,
-          reference_country_name AS country,
-          reference_creation_date AS created_at,
-          reference_validation_date AS validated_at,
-          reference_content AS content
-        FROM "references"
-        JOIN categories ON reference_category_id = categories.id
-        LEFT JOIN sections ON categories.section_id = sections.id
-        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-        LEFT JOIN themes ON themes.id = rt.reference_theme_id
-        GROUP BY "references".id, section_id, categories.id;
+        "references".id AS id, "references".title AS name,
+        section_id,
+        categories.id, 
+        array_agg(DISTINCT authors.author_name) AS author,
+        array_agg(DISTINCT themes.theme_name) AS themes,
+        "references".is_active,
+        array_agg(DISTINCT countries.country_name) AS country,
+        creation_date AS created_at,
+        validation_date AS validated_at
+      FROM "references"
+      JOIN categories ON category_id = categories.id
+      LEFT JOIN sections ON categories.section_id = sections.id
+      LEFT JOIN references_themes rt  ON "references".id = rt.reference_id
+      LEFT JOIN themes ON themes.id = rt.theme_id
+      LEFT JOIN references_authors ra ON "references".id = ra.reference_id
+      LEFT JOIN authors ON authors.id = ra.author_id
+      LEFT JOIN references_countries rc ON "references".id = rc.reference_id
+      LEFT JOIN countries ON countries.id = rc.country_id
+      GROUP BY "references".id, section_id, categories.id;
       `;
 
       const referencesResult = await Postgres.query(referencesRequest);
@@ -173,20 +165,24 @@ class References {
     try {
       const { id } = request.params;
       const referencesRequest = `
-        SELECT
-          "references".id AS id, "references".reference_name AS name,
-          categories.category_name AS category,
-          "reference_author" AS author,
-          array_agg(themes.theme_label) AS themes,
-          "references".reference_country_name AS country,
-          "references".reference_date AS date
-        FROM "references"
-        JOIN categories ON "references".reference_category_id = categories.id
-        LEFT JOIN sections ON "categories".section_id = sections.id
-        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-        LEFT JOIN themes ON themes.id = rt.reference_theme_id
-        WHERE "categories".section_id = $1
-        GROUP BY "references".id, categories.category_name;
+      SELECT
+      "references".id AS id, "references".title AS name,
+      categories.category_name AS category,
+      array_agg(DISTINCT authors.author_name) AS author,
+      array_agg(DISTINCT themes.theme_name) AS themes,
+      array_agg(DISTINCT countries.country_name) AS country,
+      "references".reference_date AS date
+    FROM "references"
+    JOIN categories ON "references".category_id = categories.id
+    LEFT JOIN sections ON "categories".section_id = sections.id
+    LEFT JOIN references_themes rt  ON "references".id = reference_id
+    LEFT JOIN themes ON themes.id = rt.theme_id
+    LEFT JOIN references_authors ra ON "references".id = ra.reference_id
+    LEFT JOIN authors ON authors.id = ra.author_id
+    LEFT JOIN references_countries rc ON "references".id = rc.reference_id
+    LEFT JOIN countries ON countries.id = rc.country_id
+    WHERE "categories".section_id = $1
+    GROUP BY "references".id, categories.category_name;
       `;
 
       const referencesResult = await Postgres.query(referencesRequest, [id]);
@@ -195,6 +191,7 @@ class References {
         throw new ErrorReferenceNotFound();
       }
 
+      referencesResult.rows.author;
       response.status(200).json({ references: referencesResult.rows });
     } catch (error) {
       next(error);
@@ -208,24 +205,25 @@ class References {
     try {
       const { id } = request.params;
       const referencesRequest = `
-        SELECT "references".id AS id, "references".reference_name AS name,
-          categories.category_name AS category,
-          (SELECT array_agg(t.theme_label) as themes
-        FROM "references" AS sousReference
-          JOIN categories sousCategories ON sousReference.reference_category_id = sousCategories.id
-          LEFT JOIN sections sourSection ON sousCategories.section_id = sourSection.id
-          LEFT JOIN reference_themes sRt  ON "references".id = sRt.reference_theme_reference_id
-          LEFT JOIN themes t ON t.id = sRt.reference_theme_id
-        WHERE sousReference.id = "references".id),
-          "references".reference_country_name AS country,
-          "references".reference_date AS date
-          FROM "references"
-          JOIN categories ON "references".reference_category_id = categories.id
-          LEFT JOIN sections ON categories.section_id = sections.id
-          LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-          LEFT JOIN themes ON themes.id = rt.reference_theme_id
-          WHERE themes.id = $1
-          GROUP BY "references".id, categories.category_name
+      SELECT "references".id AS id, "references".title AS name,
+      section_id,
+      categories.category_label AS category_label, 
+      categories.category_name AS category_name, 
+      array_agg(DISTINCT authors.author_name) AS author,
+      array_agg(DISTINCT themes.theme_name) AS themes,
+      "references".is_active,
+      array_agg(DISTINCT countries.country_name) AS country
+      FROM "references"
+    JOIN categories ON category_id = categories.id
+    LEFT JOIN sections ON categories.section_id = sections.id
+    LEFT JOIN references_themes rt  ON "references".id = rt.reference_id
+    LEFT JOIN themes ON themes.id = rt.theme_id
+    LEFT JOIN references_authors ra ON "references".id = ra.reference_id
+    LEFT JOIN authors ON authors.id = ra.author_id
+    LEFT JOIN references_countries rc ON "references".id = rc.reference_id
+    LEFT JOIN countries ON countries.id = rc.country_id
+    WHERE $1 =ANY("references".themes_id)
+      GROUP BY "references".id, categories.category_name, categories.section_id, categories.id
       `;
 
       const referencesResult = await Postgres.query(referencesRequest, [id]);
@@ -246,23 +244,21 @@ class References {
     try {
       // userid is obtained from the token
       const { userId } = request;
-
+      console.log(userId);
       const referencesRequest = `
-        SELECT
-          "references".id as id, "references".reference_name as name,
-          section_id AS "section_id",
-          categories.id as category_id,
-          array_agg(t.theme_label) as themes,
-          "references".reference_status as status,
-          reference_content AS content
-        FROM "references"
-        JOIN categories ON "references".reference_category_id = categories.id
-        LEFT JOIN sections ON categories.section_id = sections.id
-        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-        LEFT JOIN themes t ON t.id = rt.reference_theme_id
-        WHERE "references".reference_contributor_id = $1
-        GROUP BY "references".id, category_name, category_id 
-        
+      SELECT
+      "references".id as id, "references".title as name,
+      section_id AS "section_id",
+      categories.id as category_id,
+      array_agg(DISTINCT t.theme_label) as themes,
+      "references".is_active as validated
+    FROM "references"
+    JOIN categories ON "references".category_id = categories.id
+    LEFT JOIN sections ON categories.section_id = sections.id
+    LEFT JOIN references_themes rt  ON "references".id = rt.reference_id
+    LEFT JOIN themes t ON t.id = rt.theme_id
+    WHERE "references".contributor_id = $1
+    GROUP BY "references".id, category_name, categories.id, categories.section_id
       `;
 
       const referencesResult = await Postgres.query(referencesRequest, [
@@ -274,7 +270,7 @@ class References {
       }
       const references = referencesResult.rows.reduce(
         (references, reference) => {
-          if (reference.status) {
+          if (reference.validated) {
             references.validated.push(reference);
           } else {
             references.pending.push(reference);
@@ -297,23 +293,40 @@ class References {
     try {
       const { id } = request.params;
       const referenceRequest = `
-        SELECT
-          "references".id AS id, "references".reference_name AS name,
-          categories.category_name AS category,
-          "references".reference_category_id  AS categoryId,
-          array_agg(themes.theme_label) AS themes,
-          "references".reference_country_name AS country,
-          "references".reference_date AS date,
-          "references".reference_status as status,
-          "references".reference_author AS author,
-          "references".reference_content AS content
-        FROM "references"
-        JOIN categories ON "references".reference_category_id = categories.id
-        LEFT JOIN sections ON categories.section_id = sections.id
-        LEFT JOIN reference_themes rt  ON "references".id = rt.reference_theme_reference_id
-        LEFT JOIN themes ON themes.id = rt.reference_theme_id
-        WHERE "references".id = $1
-        GROUP BY "references".id, categories.category_name;
+      SELECT
+      "references".id AS id, "references".title AS "name",
+      categories.category_name AS category,
+      "references".category_id  AS categoryId,
+      array_agg(DISTINCT themes.theme_name) AS themes,
+      array_agg(DISTINCT countries.country_name) AS themes,
+      "references".reference_date AS "date",
+      array_agg(DISTINCT authors.author_name) AS authors,
+      c.extract_and_quotes AS extractsAndQuotes,
+      c.back_cover AS backCover,
+      c.context AS context,
+      c.book_structure AS bookStructure,
+      c.analysis AS analysis,
+      c.about_author AS aboutAuthor,
+      c.sources AS sources, 
+      c.to_go_further AS toGoFurther,
+      c.synopsis AS synopsis,
+      c.about_reference AS aboutReference,
+      c.actors AS actors,
+      c.episodes AS episodes,
+      c.links AS links
+    FROM "references"
+    JOIN categories ON "references".category_id = categories.id
+    LEFT JOIN sections ON categories.section_id = sections.id
+    LEFT JOIN references_themes rt  ON "references".id = rt.reference_id
+    LEFT JOIN themes ON themes.id = rt.theme_id
+    LEFT JOIN references_authors ra ON "references".id = ra.reference_id
+    LEFT JOIN authors ON authors.id = ra.author_id
+    LEFT JOIN references_countries rc ON "references".id = rc.reference_id
+    LEFT JOIN countries ON countries.id = rc.country_id
+    LEFT JOIN contents c ON "references".id = c.reference_id
+    WHERE "references".id = $1
+    GROUP BY "references".id, categories.category_name, extract_and_quotes, c.back_cover, c.context, c.book_structure, c.analysis,
+   c.about_author, c.sources, c.to_go_further, c.synopsis, c.about_reference, c.actors, c.episodes, c.links;
       `;
       const referenceResult = await Postgres.query(referenceRequest, [id]);
 

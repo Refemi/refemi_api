@@ -1,6 +1,6 @@
 // PostGreSQL dependencies
 const { Pool } = require("pg");
-const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
+const Postgres = new Pool();
 
 // Error Handlers
 const { ErrorCategoriesNotFound } = require("./categoriesErrors");
