@@ -1,6 +1,6 @@
 // PostGreSQL dependencies
 const { Pool } = require("pg");
-const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
+const Postgres = new Pool();
 
 // Import User Class
 const { User } = require("./auth");

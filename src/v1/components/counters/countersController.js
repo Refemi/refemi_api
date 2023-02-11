@@ -1,5 +1,5 @@
 const { Pool } = require("pg");
-const Postgres = new Pool({ ssl: { rejectUnauthorized: false } });
+const Postgres = new Pool();
 
 // Errors Handler
 const { ErrorReferencesNotFound } = require("./counterErrors");
@@ -12,10 +12,10 @@ class Counters {
     try {
       // Counter for all validated references
       const totalReferenceByContributors = await Postgres.query(`
-        SELECT COUNT("references".id) AS references_count, COUNT(DISTINCT u.id) as contributors_count
+        SELECT COUNT("references".id) as references_count, COUNT(DISTINCT u.id) as contributors_count
         FROM "references"
-        INNER JOIN "users" u on u.id = "references".reference_contributor_id
-        WHERE "references".reference_status = true;
+        INNER JOIN "users" u on u.id = "references".contributor_id
+        WHERE "references".is_active = true;
       `);
 
       // Counter for all validated references of the month
@@ -27,7 +27,7 @@ class Counters {
       }
 
       const monthRefs = await Postgres.query(
-        'SELECT COUNT(*) FROM "references" WHERE EXTRACT(MONTH FROM "reference_creation_date") = $1 AND "references".reference_status = true',
+        'SELECT COUNT(*) FROM "references" WHERE EXTRACT(MONTH FROM "creation_date") = $1 AND "references".is_active = true',
         [month]
       );
 
@@ -57,8 +57,8 @@ class Counters {
       // Number of validated contributions by user (contributor)
       const totalContributionsRequest = `
         SELECT
-          (SELECT COUNT(*) FROM "references" WHERE "references".reference_status = TRUE AND "reference_contributor_id" = $1) AS total_approved_contributions,
-          (SELECT COUNT(*) FROM "references" WHERE "references".reference_status = FALSE AND "reference_contributor_id" = $1) AS total_pending_contributions
+          (SELECT COUNT(*) FROM "references" WHERE "references".is_active = TRUE AND "contributor_id" = $1) AS total_approved_contributions,
+          (SELECT COUNT(*) FROM "references" WHERE "references".is_active = FALSE AND "contributor_id" = $1) AS total_pending_contributions
       `;
       const totalContributionsResult = await Postgres.query(
         totalContributionsRequest,
@@ -92,9 +92,9 @@ class Counters {
       // Total approved contributions
       const totalContributionsRequest = `
         SELECT
-          (SELECT COUNT(*) FROM "references" WHERE "references".reference_status = TRUE) AS total_approved_contributions,
-          (SELECT COUNT(*) FROM "references" WHERE "references".reference_status = FALSE) AS total_pending_contributions,
-          (SELECT COUNT(DISTINCT "reference_contributor_id") FROM "references" WHERE "reference_status" = TRUE) AS total_contributors,
+          (SELECT COUNT(*) FROM "references" WHERE "references".is_active = TRUE) AS total_approved_contributions,
+          (SELECT COUNT(*) FROM "references" WHERE "references".is_active = FALSE) AS total_pending_contributions,
+          (SELECT COUNT(DISTINCT "reference_contributor_id") FROM "references" WHERE "is_active" = TRUE) AS total_contributors,
           (SELECT COUNT(*) FROM "users" WHERE "user_role" = 3) AS total_administrators
       `;
       const totalContributionsResult = await Postgres.query(

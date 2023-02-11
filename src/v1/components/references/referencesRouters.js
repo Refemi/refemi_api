@@ -12,13 +12,20 @@ router.get("/theme/:id", ReferencesController.getAllReferencesByTheme);
 router.get("/user", verifyToken, ReferencesController.getAllReferencesByUser);
 router.get("/:id", ReferencesController.getOneReference);
 
-{/* < verifyToken and isAdmin> middleware used to match admin info from the token 
-in this case admin id and  only admin can access this route */}
-router.get("/", verifyToken, isAdmin, ReferencesController.getAllReferences);
+{
+  /* < verifyToken and isAdmin> middleware used to match admin info from the token 
+in this case admin id and  only admin can access this route */
+}
+router.get(
+  "/",
+  /*verifyToken, isAdmin,*/ ReferencesController.getAllReferences
+);
 router.post("/", verifyToken, ReferencesController.addOneReference);
-router.put("/:id", verifyToken, ReferencesController.updateOneReference);
+
+router.put("/:id", verifyToken,isAdmin, ReferencesController.updateOneReference);
 {/* < verifyToken and isAdmin> middleware used to get admin info  from the token 
 in this case admin id and  only admin can delete any Reference */}
+
 router.delete(
   "/:id",
   verifyToken,

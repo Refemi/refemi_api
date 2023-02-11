@@ -9,6 +9,9 @@ router.get("/", (_, response) => {
       "/api/v1/theme",
       "/api/v1/references",
       "api/v1/auth",
+      "api/v1/counters",
+      "api/v1/users",
+      "api/v1/search",
     ],
   });
 });
