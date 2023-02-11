@@ -341,16 +341,24 @@ class References {
   }
 
   /**
-   * Update a reference by id
+   * Update the reference status to validated the reference
    */
-  async updateOneReference(_request, response, next) {
-    try {
-      response.status(200).json({
-        message: "reference has been updated",
-      });
-    } catch (error) {
-      next(error);
-    }
+  async updateOneReference(request, response, next) {
+         const { id } = request.params;
+         const {reference_status} = request.body
+
+          try {
+            const referenceRequest = `
+                UPDATE "references" SET  reference_status = $1 WHERE "references".id = $2
+                `
+            await Postgres.query(referenceRequest, [reference_status, id]);
+              response.status(200).json({
+                message: "reference has been updated",
+              });
+          } 
+          catch (error) {
+            next(error);
+          }
   }
 }
 
