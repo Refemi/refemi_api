@@ -14,7 +14,7 @@ class References {
       const referenceThemesIds = reference.reference_theme_id;
 
       // Verify if reference already exists before creating it
-      const referenceQuery = `SELECT * FROM "references" WHERE "reference_name" = $1`;
+      const referenceQuery = `SELECT * FROM "references" WHERE "title" = $1`;
       const referenceNameArgument = [reference.reference_name];
       const referenceNameResult = await Postgres.query(
         referenceQuery,
@@ -27,7 +27,7 @@ class References {
       const referenceRequest = `
         INSERT
         INTO "references"
-          (reference_contributor_id, reference_name, reference_country_name, reference_date, reference_content,reference_category_id)
+          (contributor_id, title, reference_country_name, reference_date, reference_content,category_id)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING reference_name, reference_country_name, reference_date, reference_content, reference_category_id, id as reference_theme_reference_id
       `;
@@ -344,21 +344,20 @@ class References {
    * Update the reference status to validated the reference
    */
   async updateOneReference(request, response, next) {
-         const { id } = request.params;
-         const {reference_status} = request.body
+    const { id } = request.params;
+    const { reference_status } = request.body;
 
-          try {
-            const referenceRequest = `
+    try {
+      const referenceRequest = `
                 UPDATE "references" SET  reference_status = $1 WHERE "references".id = $2
-                `
-            await Postgres.query(referenceRequest, [reference_status, id]);
-              response.status(200).json({
-                message: "reference has been updated",
-              });
-          } 
-          catch (error) {
-            next(error);
-          }
+                `;
+      await Postgres.query(referenceRequest, [reference_status, id]);
+      response.status(200).json({
+        message: "reference has been updated",
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 }
 

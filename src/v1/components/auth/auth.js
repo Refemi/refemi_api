@@ -10,7 +10,7 @@ const bcrypt = require("bcrypt");
  * @param {string} userRole
  */
 class User {
-  constructor(name, email, password = "", id = -1, role = -1) {
+  constructor(name, email, password, id, role) {
     this.id = id;
     this.name = name;
     this.email = email;
