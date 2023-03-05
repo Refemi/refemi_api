@@ -12,7 +12,7 @@ class Categories {
         SELECT categories.id, category_name AS name, category_label as label, section_id
           FROM categories
         INNER JOIN sections ON sections.id = section_id
-        WHERE is_active = true
+        WHERE categories.is_active = true
       `;
 
       const categoriesResult = await Postgres.query(categoriesQuery);
