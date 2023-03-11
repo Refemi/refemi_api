@@ -41,7 +41,7 @@ class Auth {
       }
 
       // Verify if user already exists before creating it
-      const userQuery = `SELECT * FROM "users" WHERE "user_email" = $1`;
+      const userQuery = `SELECT * FROM "users" WHERE "email" = $1`;
       const userArgument = [userEmail];
       const userResult = await Postgres.query(userQuery, userArgument);
       if (userResult.rows.length > 0) {
@@ -52,7 +52,7 @@ class Auth {
       NewUser.password = await NewUser.encryptPassword(userPassword);
 
       const addUserQuery = `
-        INSERT INTO "users" ("user_name", "user_email", "user_password")
+        INSERT INTO "users" ("username", "email", "password")
         VALUES ($1, $2, $3)
       `;
       const addUserArguments = [NewUser.name, NewUser.email, NewUser.password];
@@ -85,7 +85,7 @@ class Auth {
     try {
       const { userEmail, userPassword } = request.body;
       const userRequest = `
-        SELECT * FROM "users" WHERE user_email= $1
+        SELECT * FROM "users" WHERE email= $1
       `;
       const userResult = await Postgres.query(userRequest, [userEmail]);
       if (userResult.rows.length === 0) {
@@ -94,11 +94,11 @@ class Auth {
 
       // User object construction
       const UserDB = new User(
-        userResult.rows[0].user_name,
-        userResult.rows[0].user_email,
-        userResult.rows[0].user_password,
+        userResult.rows[0].username,
+        userResult.rows[0].email,
+        userResult.rows[0].password,
         userResult.rows[0].id,
-        userResult.rows[0].user_role
+        userResult.rows[0].role
       );
 
       // Checks if the sent password matches the registered one
