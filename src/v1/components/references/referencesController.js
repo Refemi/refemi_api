@@ -8,14 +8,49 @@ const {
 } = require("./referencesErrors");
 
 class References {
+  async addNewReference(request, response, next) {
+    const reference = request.body;
+    const body = {
+      reference_id: reference ? reference.id : null,
+      title: referencesFound,
+      reference_date: reference_date,
+      ccountries_names: country,
+      content: content,
+      category_id: category,
+      themes_ids: themesIds,
+    };
+    const referenceThemesIds = reference.themes_ids;
+    try {
+      const authorNames = ref[2].split(",");
+      let authors = [];
+      for (let authorName of authorNames) {
+        authors.push(await getOrCreateAuthor(authorName));
+      }
+
+      const countryNames = ref[5].split(",");
+      let countries = [];
+      for (let countryName of countryNames) {
+        countries.push(await getOrCreateCountry(countryName));
+      }
+
+      const fieldNames = ref[4].split(",");
+      let fields = [];
+      for (let fieldName of fieldNames) {
+        fields.push(await getOrCreateField(fieldName));
+      }
+    } catch (error) {
+      return error;
+    }
+  }
+
   async addOneReference(request, response, next) {
     try {
       const reference = request.body;
       const referenceThemesIds = reference.reference_theme_id;
 
       // Verify if reference already exists before creating it
-      const referenceQuery = `SELECT * FROM "references" WHERE "reference_name" = $1`;
-      const referenceNameArgument = [reference.reference_name];
+      const referenceQuery = `SELECT * FROM "references" WHERE "title" = $1`;
+      const referenceNameArgument = [reference.title];
       const referenceNameResult = await Postgres.query(
         referenceQuery,
         referenceNameArgument
@@ -27,14 +62,14 @@ class References {
       const referenceRequest = `
         INSERT
         INTO "references"
-          (reference_contributor_id, reference_name, reference_country_name, reference_date, reference_content,reference_category_id)
+          (contributor_id, title, reference_country_name, reference_date, reference_content,reference_category_id)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING reference_name, reference_country_name, reference_date, reference_content, reference_category_id, id as reference_theme_reference_id
+        RETURNING title, reference_country_name, reference_date, reference_content, reference_category_id, id as reference_theme_reference_id
       `;
 
       const referenceArgument = [
         request.userId,
-        reference.reference_name,
+        reference.title,
         reference.reference_country_name,
         reference.reference_date,
         reference.reference_content,
@@ -66,7 +101,7 @@ class References {
 
       response.status(202).json({
         reference: {
-          name: reference.reference_name,
+          name: reference.title,
           country: reference.reference_country_name,
           date: reference.reference_date,
           content: reference.reference_content,
@@ -344,21 +379,20 @@ class References {
    * Update the reference status to validated the reference
    */
   async updateOneReference(request, response, next) {
-         const { id } = request.params;
-         const {reference_status} = request.body
+    const { id } = request.params;
+    const { reference_status } = request.body;
 
-          try {
-            const referenceRequest = `
-                UPDATE "references" SET  reference_status = $1 WHERE "references".id = $2
-                `
-            await Postgres.query(referenceRequest, [reference_status, id]);
-              response.status(200).json({
-                message: "reference has been updated",
-              });
-          } 
-          catch (error) {
-            next(error);
-          }
+    try {
+      const referenceRequest = `
+                UPDATE "references" SET  is_active = $1 WHERE "references".id = $2
+                `;
+      await Postgres.query(referenceRequest, [reference_status, id]);
+      response.status(200).json({
+        message: "reference has been updated",
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 }
 

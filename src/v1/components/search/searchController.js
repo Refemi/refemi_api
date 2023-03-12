@@ -51,7 +51,7 @@ class Search {
   async getAllSearchReferencesByName(_, response, next) {
     try {
       const referencesRequest = `
-          SELECT "id", "reference_name"
+          SELECT "id", "title"
           FROM "references"
         `;
       const referenceResult = await Postgres.query(referencesRequest);
