@@ -8,49 +8,14 @@ const {
 } = require("./referencesErrors");
 
 class References {
-  async addNewReference(request, response, next) {
-    const reference = request.body;
-    const body = {
-      reference_id: reference ? reference.id : null,
-      title: referencesFound,
-      reference_date: reference_date,
-      ccountries_names: country,
-      content: content,
-      category_id: category,
-      themes_ids: themesIds,
-    };
-    const referenceThemesIds = reference.themes_ids;
-    try {
-      const authorNames = ref[2].split(",");
-      let authors = [];
-      for (let authorName of authorNames) {
-        authors.push(await getOrCreateAuthor(authorName));
-      }
-
-      const countryNames = ref[5].split(",");
-      let countries = [];
-      for (let countryName of countryNames) {
-        countries.push(await getOrCreateCountry(countryName));
-      }
-
-      const fieldNames = ref[4].split(",");
-      let fields = [];
-      for (let fieldName of fieldNames) {
-        fields.push(await getOrCreateField(fieldName));
-      }
-    } catch (error) {
-      return error;
-    }
-  }
-
   async addOneReference(request, response, next) {
     try {
-      const reference = request.body;
-      const referenceThemesIds = reference.reference_theme_id;
+      const referenceDescription = request.body.description;
+      const referenceContent = request.body.content;
 
       // Verify if reference already exists before creating it
       const referenceQuery = `SELECT * FROM "references" WHERE "title" = $1`;
-      const referenceNameArgument = [reference.title];
+      const referenceNameArgument = [referenceDescription.title];
       const referenceNameResult = await Postgres.query(
         referenceQuery,
         referenceNameArgument
@@ -59,55 +24,65 @@ class References {
         throw new ErrorReferenceAlreadyExist();
       }
 
-      const referenceRequest = `
-        INSERT
-        INTO "references"
-          (contributor_id, title, reference_country_name, reference_date, reference_content,reference_category_id)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING title, reference_country_name, reference_date, reference_content, reference_category_id, id as reference_theme_reference_id
+      // Insert reference description
+      const descriptionRequest = `
+      INSERT INTO public."references"
+      (contributor_id, is_validated, creation_date, title, reference_last_modification, reference_date, fields_id, moderator_id, validation_date, category_id, is_active, themes_id, authors_id, countries_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING *
       `;
-
-      const referenceArgument = [
-        request.userId,
-        reference.title,
-        reference.reference_country_name,
-        reference.reference_date,
-        reference.reference_content,
-        reference.reference_category_id,
+      const descriptionArguments = [
+        parseInt(request.params.userId),
+        false,
+        new Date(),
+        referenceDescription.title,
+        null,
+        referenceDescription.date,
+        referenceDescription.fieldIds,
+        null,
+        null,
+        referenceDescription.categoryId,
+        false,
+        referenceDescription.themeIds,
+        referenceDescription.authorIds,
+        referenceDescription.countryIds,
       ];
-
-      // limit the number of themes between 1 and 5
-      if (referenceThemesIds.length === 0 || referenceThemesIds.length > 5) {
-        throw new ErrorReferencesThemesLimit();
-      }
-
-      const insertReference = await Postgres.query(
-        referenceRequest,
-        referenceArgument
+      const descriptionRes = await Postgres.query(
+        descriptionRequest,
+        descriptionArguments
       );
+      const refId = descriptionRes.rows[0].id;
 
-      for (let i in referenceThemesIds) {
-        await Postgres.query(
-          `
-          INSERT INTO "reference_themes" (reference_theme_reference_id, reference_theme_id)
-          VALUES ($1, $2)
-        `,
-          [
-            insertReference.rows[0].reference_theme_reference_id,
-            referenceThemesIds[i],
-          ]
-        );
-      }
+      // insert content reference
+      const contentRequest = `
+      INSERT INTO public.contents
+      (extract_and_quotes, back_cover, context, book_structure, analysis, about_author, sources, to_go_further, synopsis, about_reference, actors, episodes, links, reference_id)      
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING *
+      `;
+      const contentArguments = [
+        referenceContent.extractAndQuotes,
+        referenceContent.backCover,
+        referenceContent.context,
+        referenceContent.bookStructure,
+        referenceContent.analysis,
+        referenceContent.aboutAuthor,
+        referenceContent.sources,
+        referenceContent.toGoFurther,
+        referenceContent.synopsis,
+        referenceContent.aboutReference,
+        referenceContent.actors,
+        referenceContent.episodes,
+        referenceContent.links,
+        refId,
+      ];
+      const contentRes = await Postgres.query(contentRequest, contentArguments);
+      const reference = {
+        description: descriptionRes.rows[0],
+        content: contentRes.rows[0],
+      };
 
-      response.status(202).json({
-        reference: {
-          name: reference.title,
-          country: reference.reference_country_name,
-          date: reference.reference_date,
-          content: reference.reference_content,
-          category: reference.reference_category_id,
-        },
-      });
+      response.status(202).json(reference);
     } catch (error) {
       if (error.code === "23505") {
         next(new ErrorReferenceAlreadyExist());
@@ -279,7 +254,6 @@ class References {
     try {
       // userid is obtained from the token
       const { userId } = request;
-      console.log(userId);
       const referencesRequest = `
       SELECT
       "references".id as id, "references".title as name,
